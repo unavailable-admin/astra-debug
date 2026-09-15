@@ -22,6 +22,7 @@ astrabot/
   config/           # 相机参数和关节模型
 tests/             # 离线测试与最小回归数据
 docs/              # 当前用法、标定和协议
+scripts/           # 使用当前机器已验证环境的启动脚本
 ```
 
 ## 安装与配置
@@ -51,9 +52,42 @@ export https_proxy="$http_proxy"
 
 客户端仅连接官方 `https://api.openai.com/v1`。
 
+## 当前机器与 VS Code
+
+当前已验证环境为 Conda `kairos_3_1_pre`，Python 3.10.12：
+
+```text
+/kairos_vepfs_volc/embodied/fuzuoyi/anaconda3/envs/kairos_3_1_pre/bin/python
+```
+
+`.vscode/settings.json` 已配置默认解释器。使用 Remote SSH 打开本目录，并在远端安装
+Python 和 Pylance 扩展。如果工作区之前选过其他环境，执行
+`Python: Select Interpreter` → `Enter interpreter path`，填入上面的路径。
+该配置不会覆盖 VS Code 已保存的解释器选择。
+
 ## 运行
 
 默认 `ws://10.19.4.253:8081`，使用前确认该端口空闲；所有子命令都支持 `--uri`。
+
+在当前机器无需重新安装依赖，可直接使用启动脚本。先重置，再启动默认 ACE、1×、最多4次抓放：
+
+```bash
+./scripts/astrabot.sh reset && ./scripts/astrabot.sh
+```
+
+脚本自动进入仓库目录、选用上述 Python 并限制计算线程；默认代理为 `127.0.0.1:18888`，
+运行前仍按上文检查隧道。无参数只启动拼字，不隐式重置场景。
+也可以传递任意子命令和参数：
+
+```bash
+./scripts/astrabot.sh run --word ACE --speed 1.2 --max-skills 4
+./scripts/astrabot.sh reset --uri ws://10.19.4.253:8082
+./scripts/astrabot.sh run --uri ws://10.19.4.253:8082 --word ACE --max-skills 4
+./scripts/astrabot.sh --help
+```
+
+其他机器可设置 `ASTRABOT_PYTHON=/path/to/python` 覆盖脚本的解释器路径。
+使用自己安装的环境时，也可直接执行下面的 Python 命令：
 
 ```bash
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1

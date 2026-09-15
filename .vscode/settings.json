@@ -2,5 +2,16 @@
   "python.defaultInterpreterPath": "/kairos_vepfs_volc/embodied/fuzuoyi/anaconda3/envs/kairos_3_1_pre/bin/python",
   "python.testing.unittestEnabled": true,
   "python.testing.pytestEnabled": false,
-  "python.testing.unittestArgs": ["-v", "-s", "tests", "-p", "test_*.py"]
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "tests",
+    "-p",
+    "test_*.py"
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
+  "python-envs.defaultPackageManager": "ms-python.python:conda",
+  "terminal.integrated.env.linux": {
+    "CONDA_ENVS_PATH": "/root/miniconda3/envs:/root/.conda/envs:/kairos_vepfs_volc/embodied/fuzuoyi/anaconda3/envs"
+  }
 }

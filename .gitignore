@@ -1,0 +1,38 @@
+# Credentials
+/.secrets/
+/apikey
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Local dependencies, reference checkouts and recoverable archives
+/.sim_deps/
+/.local_archive/
+/.local_tools/
+/inspect-robots/
+/inspect-robots-yam/
+/worldevals/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.DS_Store
+# Generated output; allow only required historical inputs and entry points
+/runs/*
+!/runs/README.md
+!/runs/reset_scene11_worker.py
+!/runs/run_ace_fresh.py
+!/runs/run_ace_trajectory_fresh.py
+!/runs/initial.jpg
+!/runs/scene_authored_geometry.json
+!/runs/hi_plan_response.json
+!/runs/hi_grasp_final.jpg
+!/runs/hi_demo_20260910_082128/
+/runs/hi_demo_20260910_082128/*
+!/runs/hi_demo_20260910_082128/frame_1556.jpg

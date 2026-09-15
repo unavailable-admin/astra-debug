@@ -1,0 +1,1723 @@
+[
+  {
+    "name": "left_hip_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "pelvis",
+    "child": "left_hip_pitch_link",
+    "pos0": [
+      0.0,
+      0.06445199996232986,
+      -0.10270000249147415
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -2.530699718516441,
+    "upper": 2.879799923693369
+  },
+  {
+    "name": "left_hip_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_hip_pitch_link",
+    "child": "left_hip_roll_link",
+    "pos0": [
+      0.0,
+      0.052000001072883606,
+      -0.03046499937772751
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9961786866188049,
+      0.0,
+      -0.08733857423067093,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -0.5235999407312758,
+    "upper": 2.9670996758067116
+  },
+  {
+    "name": "left_hip_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_hip_roll_link",
+    "child": "left_hip_yaw_link",
+    "pos0": [
+      0.025001000612974167,
+      0.0,
+      -0.12411999702453613
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -2.757599978126756,
+    "upper": 2.757599978126756
+  },
+  {
+    "name": "left_knee_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_hip_yaw_link",
+    "child": "left_knee_link",
+    "pos0": [
+      -0.0782729983329773,
+      0.0021488999482244253,
+      -0.17734000086784363
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9961786866188049,
+      0.0,
+      0.08733857423067093,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.0872669952319345,
+    "upper": 2.879799923693369
+  },
+  {
+    "name": "left_ankle_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_knee_link",
+    "child": "left_ankle_pitch_link",
+    "pos0": [
+      0.0,
+      -9.444500028621405e-05,
+      -0.30000999569892883
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.872669952319345,
+    "upper": 0.5235999407312758
+  },
+  {
+    "name": "left_ankle_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_ankle_pitch_link",
+    "child": "left_ankle_roll_link",
+    "pos0": [
+      0.0,
+      0.0,
+      -0.01755799911916256
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -0.2617999703656379,
+    "upper": 0.2617999703656379
+  },
+  {
+    "name": "pelvis_contour_joint",
+    "type": "PhysicsFixedJoint",
+    "parent": "pelvis",
+    "child": "pelvis_contour_link",
+    "pos0": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "name": "right_hip_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "pelvis",
+    "child": "right_hip_pitch_link",
+    "pos0": [
+      0.0,
+      -0.06445199996232986,
+      -0.10270000249147415
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -2.530699718516441,
+    "upper": 2.879799923693369
+  },
+  {
+    "name": "right_hip_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_hip_pitch_link",
+    "child": "right_hip_roll_link",
+    "pos0": [
+      0.0,
+      -0.052000001072883606,
+      -0.03046499937772751
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9961786866188049,
+      0.0,
+      -0.08733857423067093,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -2.9670996758067116,
+    "upper": 0.5235999407312758
+  },
+  {
+    "name": "right_hip_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_hip_roll_link",
+    "child": "right_hip_yaw_link",
+    "pos0": [
+      0.025001000612974167,
+      0.0,
+      -0.12411999702453613
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -2.757599978126756,
+    "upper": 2.757599978126756
+  },
+  {
+    "name": "right_knee_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_hip_yaw_link",
+    "child": "right_knee_link",
+    "pos0": [
+      -0.0782729983329773,
+      -0.0021488999482244253,
+      -0.17734000086784363
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9961786866188049,
+      0.0,
+      0.08733857423067093,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.0872669952319345,
+    "upper": 2.879799923693369
+  },
+  {
+    "name": "right_ankle_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_knee_link",
+    "child": "right_ankle_pitch_link",
+    "pos0": [
+      0.0,
+      9.444500028621405e-05,
+      -0.30000999569892883
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.872669952319345,
+    "upper": 0.5235999407312758
+  },
+  {
+    "name": "right_ankle_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_ankle_pitch_link",
+    "child": "right_ankle_roll_link",
+    "pos0": [
+      0.0,
+      0.0,
+      -0.01755799911916256
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -0.2617999703656379,
+    "upper": 0.2617999703656379
+  },
+  {
+    "name": "waist_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "pelvis",
+    "child": "waist_yaw_link",
+    "pos0": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -2.6180000032620017,
+    "upper": 2.6180000032620017
+  },
+  {
+    "name": "waist_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "waist_yaw_link",
+    "child": "waist_roll_link",
+    "pos0": [
+      -0.003963499795645475,
+      0.0,
+      0.04399999976158142
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -0.5199999461487339,
+    "upper": 0.5199999461487339
+  },
+  {
+    "name": "waist_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "waist_roll_link",
+    "child": "torso_link",
+    "pos0": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.5199999461487339,
+    "upper": 0.5199999461487339
+  },
+  {
+    "name": "head_joint",
+    "type": "PhysicsFixedJoint",
+    "parent": "torso_link",
+    "child": "head_link",
+    "pos0": [
+      0.003963499795645475,
+      0.0,
+      -0.04399999976158142
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "name": "left_shoulder_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "torso_link",
+    "child": "left_shoulder_pitch_link",
+    "pos0": [
+      0.00395630020648241,
+      0.10022000223398209,
+      0.2477799952030182
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9902640581130981,
+      0.13920147716999054,
+      1.3872204362996854e-05,
+      -9.86868399195373e-05
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -3.0891997528324464,
+    "upper": 2.6703998282381827
+  },
+  {
+    "name": "left_shoulder_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_shoulder_pitch_link",
+    "child": "left_shoulder_roll_link",
+    "pos0": [
+      0.0,
+      0.03799999877810478,
+      -0.013830999843776226
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9902682304382324,
+      -0.1391717791557312,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -1.5881999513605098,
+    "upper": 2.251499768786932
+  },
+  {
+    "name": "left_shoulder_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_shoulder_roll_link",
+    "child": "left_shoulder_yaw_link",
+    "pos0": [
+      0.0,
+      0.006240000016987324,
+      -0.10320000350475311
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -2.6180000032620017,
+    "upper": 2.6180000032620017
+  },
+  {
+    "name": "left_elbow_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_shoulder_yaw_link",
+    "child": "left_elbow_link",
+    "pos0": [
+      0.015783000737428665,
+      0.0,
+      -0.08051799982786179
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -1.0471998814625516,
+    "upper": 2.094399762925103
+  },
+  {
+    "name": "left_wrist_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_elbow_link",
+    "child": "left_wrist_roll_link",
+    "pos0": [
+      0.10000000149011612,
+      0.001887909951619804,
+      -0.009999999776482582
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -1.9722219215955379,
+    "upper": 1.9722219215955379
+  },
+  {
+    "name": "left_wrist_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_wrist_roll_link",
+    "child": "left_wrist_pitch_link",
+    "pos0": [
+      0.03799999877810478,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -1.6144295580947547,
+    "upper": 1.6144295580947547
+  },
+  {
+    "name": "left_wrist_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "left_wrist_pitch_link",
+    "child": "left_wrist_yaw_link",
+    "pos0": [
+      0.04600000008940697,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -1.6144295580947547,
+    "upper": 1.6144295580947547
+  },
+  {
+    "name": "left_hand_attach_joint",
+    "type": "PhysicsFixedJoint",
+    "parent": "left_wrist_yaw_link",
+    "child": "lh_hand_base_link",
+    "pos0": [
+      0.04149999842047691,
+      0.003000000026077032,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.5,
+      -0.4999999701976776,
+      0.5000001192092896,
+      -0.4999999701976776
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "name": "lh_index_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_hand_base_link",
+    "child": "lh_index_proximal",
+    "pos0": [
+      0.0024757999926805496,
+      -0.02418999932706356,
+      0.09877900034189224
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9996573328971863,
+      0.02617700770497322,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "lh_index_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_index_proximal",
+    "child": "lh_index_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "lh_middle_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_hand_base_link",
+    "child": "lh_middle_proximal",
+    "pos0": [
+      0.0005257599987089634,
+      -0.006339999847114086,
+      0.10270000249147415
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "lh_middle_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_middle_proximal",
+    "child": "lh_middle_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "lh_pinky_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_hand_base_link",
+    "child": "lh_pinky_proximal",
+    "pos0": [
+      0.0024757999926805496,
+      0.02837200090289116,
+      0.092740997672081
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9990482330322266,
+      -0.04361915588378906,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "lh_pinky_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_pinky_proximal",
+    "child": "lh_pinky_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "lh_ring_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_hand_base_link",
+    "child": "lh_ring_proximal",
+    "pos0": [
+      0.0010258000111207366,
+      0.011134999804198742,
+      0.0987669974565506
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9996573328971863,
+      -0.02617700770497322,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "lh_ring_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_ring_proximal",
+    "child": "lh_ring_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "lh_thumb_cmc_yaw",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_hand_base_link",
+    "child": "lh_thumb_metacarpals_base2",
+    "pos0": [
+      0.011508000083267689,
+      -0.022974999621510506,
+      0.03279399871826172
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": 0.0,
+    "upper": 1.2999998487270779
+  },
+  {
+    "name": "lh_thumb_cmc_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_thumb_metacarpals_base2",
+    "child": "lh_thumb_metacarpals",
+    "pos0": [
+      0.006164900027215481,
+      -0.010677999816834927,
+      -0.004891000222414732
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.419199675321579,
+      0.4720287322998047,
+      -0.2725243866443634,
+      0.7260792255401611
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 0.5799999335332967
+  },
+  {
+    "name": "lh_thumb_ip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "lh_thumb_metacarpals",
+    "child": "lh_thumb_distal",
+    "pos0": [
+      0.0037775998935103416,
+      0.0,
+      0.045368000864982605
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.2656399656966663,
+    "upper": 1.5938397276009708
+  },
+  {
+    "name": "logo_joint",
+    "type": "PhysicsFixedJoint",
+    "parent": "torso_link",
+    "child": "logo_link",
+    "pos0": [
+      0.003963499795645475,
+      0.0,
+      -0.04399999976158142
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "name": "right_shoulder_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "torso_link",
+    "child": "right_shoulder_pitch_link",
+    "pos0": [
+      0.00395630020648241,
+      -0.10021000355482101,
+      0.2477799952030182
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9902640581130981,
+      -0.13920147716999054,
+      1.3872204362996854e-05,
+      9.86868399195373e-05
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -3.0891997528324464,
+    "upper": 2.6703998282381827
+  },
+  {
+    "name": "right_shoulder_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_shoulder_pitch_link",
+    "child": "right_shoulder_roll_link",
+    "pos0": [
+      0.0,
+      -0.03799999877810478,
+      -0.013830999843776226
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9902682304382324,
+      0.1391717791557312,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -2.251499768786932,
+    "upper": 1.5881999513605098
+  },
+  {
+    "name": "right_shoulder_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_shoulder_roll_link",
+    "child": "right_shoulder_yaw_link",
+    "pos0": [
+      0.0,
+      -0.006240000016987324,
+      -0.10320000350475311
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -2.6180000032620017,
+    "upper": 2.6180000032620017
+  },
+  {
+    "name": "right_elbow_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_shoulder_yaw_link",
+    "child": "right_elbow_link",
+    "pos0": [
+      0.015783000737428665,
+      0.0,
+      -0.08051799982786179
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -1.0471998814625516,
+    "upper": 2.094399762925103
+  },
+  {
+    "name": "right_wrist_roll_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_elbow_link",
+    "child": "right_wrist_roll_link",
+    "pos0": [
+      0.10000000149011612,
+      -0.001887909951619804,
+      -0.009999999776482582
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "X",
+    "lower": -1.9722219215955379,
+    "upper": 1.9722219215955379
+  },
+  {
+    "name": "right_wrist_pitch_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_wrist_roll_link",
+    "child": "right_wrist_pitch_link",
+    "pos0": [
+      0.03799999877810478,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -1.6144295580947547,
+    "upper": 1.6144295580947547
+  },
+  {
+    "name": "right_wrist_yaw_joint",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "right_wrist_pitch_link",
+    "child": "right_wrist_yaw_link",
+    "pos0": [
+      0.04600000008940697,
+      0.0,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": -1.6144295580947547,
+    "upper": 1.6144295580947547
+  },
+  {
+    "name": "right_hand_attach_joint",
+    "type": "PhysicsFixedJoint",
+    "parent": "right_wrist_yaw_link",
+    "child": "rh_hand_base_link",
+    "pos0": [
+      0.04149999842047691,
+      -0.003000000026077032,
+      0.0
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.5000000596046448,
+      0.5,
+      0.4999999701976776,
+      0.5
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "name": "rh_index_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_hand_base_link",
+    "child": "rh_index_proximal",
+    "pos0": [
+      0.0024757999926805496,
+      0.02418999932706356,
+      0.09877900034189224
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9996573328971863,
+      -0.02617700770497322,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "rh_index_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_index_proximal",
+    "child": "rh_index_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "rh_middle_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_hand_base_link",
+    "child": "rh_middle_proximal",
+    "pos0": [
+      0.0005257599987089634,
+      0.006339999847114086,
+      0.10270000249147415
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "rh_middle_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_middle_proximal",
+    "child": "rh_middle_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "rh_pinky_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_hand_base_link",
+    "child": "rh_pinky_proximal",
+    "pos0": [
+      0.0024757999926805496,
+      -0.02837200090289116,
+      0.092740997672081
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9990482330322266,
+      0.04361915588378906,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "rh_pinky_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_pinky_proximal",
+    "child": "rh_pinky_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "rh_ring_mcp_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_hand_base_link",
+    "child": "rh_ring_proximal",
+    "pos0": [
+      0.0010258000111207366,
+      -0.011134999804198742,
+      0.0987669974565506
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.9996573328971863,
+      0.02617700770497322,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 1.599999885518433
+  },
+  {
+    "name": "rh_ring_dip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_ring_proximal",
+    "child": "rh_ring_distal",
+    "pos0": [
+      -0.005251599941402674,
+      0.0,
+      0.03662500157952309
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.28479997829070053,
+    "upper": 1.7087998697442033
+  },
+  {
+    "name": "rh_thumb_cmc_yaw",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_hand_base_link",
+    "child": "rh_thumb_metacarpals_base2",
+    "pos0": [
+      0.011508000083267689,
+      0.022974999621510506,
+      0.03279399871826172
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "quat1": [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "axis": "Z",
+    "lower": 0.0,
+    "upper": 1.3599999359801818
+  },
+  {
+    "name": "rh_thumb_cmc_pitch",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_thumb_metacarpals_base2",
+    "child": "rh_thumb_metacarpals",
+    "pos0": [
+      0.006164900027215481,
+      0.010677999816834927,
+      -0.004891000222414732
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      0.419199675321579,
+      -0.4720287322998047,
+      -0.2725243866443634,
+      -0.7260792255401611
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": 0.0,
+    "upper": 0.5799999335332967
+  },
+  {
+    "name": "rh_thumb_ip",
+    "type": "PhysicsRevoluteJoint",
+    "parent": "rh_thumb_metacarpals",
+    "child": "rh_thumb_distal",
+    "pos0": [
+      0.0037775998935103416,
+      0.0,
+      0.045368000864982605
+    ],
+    "pos1": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat0": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "quat1": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "axis": "Y",
+    "lower": -0.2157599904544046,
+    "upper": 1.294559809568373
+  }
+]

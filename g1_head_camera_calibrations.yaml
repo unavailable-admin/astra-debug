@@ -1,0 +1,116 @@
+# G1 head-camera parameters copied from /root/code/easim on 2026-09-14.
+#
+# Important:
+# - `single_sim_camera` is an authored Isaac Sim camera, not a physical-camera calibration.
+# - `stereo_head_camera` is the repository's provisional external stereo calibration.
+# - The stereo pair is not the built-in RealSense D435i.
+# - Quaternions are wxyz. OpenCV camera coordinates are x-right, y-down, z-forward.
+#   Isaac/OpenGL camera coordinates are x-right, y-up, z-backward.
+
+single_sim_camera:
+  description: "G1+O6 historical monocular viewport camera"
+  image_size_wh: [1280, 720]
+  parent_link: torso_link
+  prim_path_template: "{ENV_REGEX_NS}/Robot/g1_29dof_rev_1_0/torso_link/ViewportCamera"
+
+  intrinsics:
+    model: pinhole
+    K:
+      - [488.6661894535911, 0.0, 640.0]
+      - [0.0, 488.6661894535911, 360.0]
+      - [0.0, 0.0, 1.0]
+    distortion_model: none
+    distortion_coefficients: []
+    source_parameters:
+      focal_length: 8.0
+      horizontal_aperture: 20.955
+      vertical_aperture: 11.7871875
+      clipping_range_m: [0.1, 100.0]
+
+  extrinsics:
+    transform: T_torso_link_camera_opengl
+    translation_m: [0.07, 0.0, 0.5]
+    rotation_quaternion_wxyz: [0.680, 0.195, -0.195, -0.680]
+    camera_convention: opengl
+    note: "Authored simulation offset; not measured on a real G1."
+
+stereo_head_camera:
+  description: "Provisional calibrated external head-mounted stereo RGB pair"
+  image_size_wh: [640, 480]
+  parent_link: head_link
+  parent_prim_path_template: "{ENV_REGEX_NS}/Robot/g1_29dof_rev_1_0/head_link"
+  baseline_m: 0.060526638044667666
+
+  left:
+    intrinsics:
+      K:
+        - [274.67404651288297, 0.0, 270.14642708508336]
+        - [0.0, 274.6166552755034, 248.3510124943727]
+        - [0.0, 0.0, 1.0]
+      distortion_model: plumb_bob
+      distortion_coefficients_k1_k2_p1_p2_k3:
+        - 0.07263610402734716
+        - -0.09086771565163176
+        - -0.0003991544340669074
+        - -0.0011797429516394152
+        - 0.02651723580318003
+      calibration_rms_px: 0.1513129486880535
+
+    calibrated_extrinsics:
+      transform: T_pelvis_left_camera_opencv_world2cam
+      matrix:
+        - [0.0457644614, -0.998512654, 0.0296326493, 0.000824101983]
+        - [-0.693372447, -0.0531054122, -0.718619833, 0.312809986]
+        - [0.719124651, 0.0123407871, -0.694771503, 0.329100684]
+        - [0.0, 0.0, 0.0, 1.0]
+      translation_unit: meter
+      camera_convention: opencv
+
+    isaac_render_offset:
+      transform: T_head_link_left_camera_opengl
+      translation_m: [0.02019169633010381, 0.013373418029309846, 0.48341681643601064]
+      rotation_quaternion_wxyz:
+        [0.669634485490054, 0.27289537656239493, -0.2795395534618322, -0.6316450010438609]
+
+  right:
+    intrinsics:
+      K:
+        - [276.0604791239362, 0.0, 296.90160723568414]
+        - [0.0, 276.14124445686514, 258.38179108570444]
+        - [0.0, 0.0, 1.0]
+      distortion_model: plumb_bob
+      distortion_coefficients_k1_k2_p1_p2_k3:
+        - 0.07767002065782179
+        - -0.09264587567068676
+        - 0.0006040912509510709
+        - -0.001966108290394711
+        - 0.025781063955657355
+      calibration_rms_px: 0.19832091111534825
+
+    isaac_render_offset:
+      transform: T_head_link_right_camera_opengl
+      translation_m: [0.021428408962812125, -0.04708456349156343, 0.4863893088190057]
+      rotation_quaternion_wxyz:
+        [0.6693551948576947, 0.2680846052656085, -0.2802799575907232, -0.6336697980096122]
+
+  stereo_left_to_right:
+    convention: opencv
+    R:
+      - [0.9999653029549583, -0.00005615409159806394, -0.008330049994837472]
+      - [0.0000021143665208735444, 0.9999789579594757, -0.006487189978006002]
+      - [0.00833023899584815, 0.006486947278904314, 0.9999442617632609]
+    T_mm: [-60.526638044667666, -0.22964302882092318, 1.4163508221091742]
+    calibration_rms_px: 0.1892402929871806
+
+  isaac_rendering_adjustment:
+    common_mount_translation_head_m: [0.04, 0.0, 0.03]
+    note: >
+      Simulation-only translation added to both cameras to keep head/neck
+      geometry out of view. Distortion coefficients are metadata only and are
+      not applied by the current pinhole renderer.
+
+source_files:
+  single_sim_camera:
+    "/root/code/easim/source/easim/model_zoo/custom_tasks/manager_based/manipulation/pick_place_right/office_pick_bowl_replay_env_cfg.py"
+  stereo_head_camera:
+    "/root/code/easim/source/easim/model_zoo/custom_tasks/manager_based/manipulation/pick_place_right/pick_fruits_stereo_env_cfg.py"

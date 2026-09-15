@@ -1,0 +1,146 @@
+import json
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import cv2
+import numpy as np
+from scipy.spatial.transform import Rotation
+
+from astrabot.controller import completion_checks, targets_for
+from astrabot.kinematics import Kinematics
+from astrabot.motion import Grasp, continuous_ik_step, plan_pick_place
+from astrabot.stereo import StereoTracker
+
+
+class StereoIntegrationTests(unittest.TestCase):
+    def test_completion_requires_positions_and_actual_hand_separation(self):
+        targets = targets_for("E", -0.08)
+        estimates = {"E": {"estimated_xyz": [-0.08, 1.66, 0.777]}}
+        self.assertTrue(completion_checks(estimates, targets, [[0, 1.6, 1.05]])["ok"])
+        self.assertFalse(completion_checks(estimates, targets, [[-0.08, 1.66, 0.8]])["ok"])
+        self.assertFalse(completion_checks({}, targets, [[0, 1.6, 1.05]])["ok"])
+        self.assertFalse(completion_checks(estimates, targets, [])["ok"])
+        self.assertFalse(
+            completion_checks(
+                {"E": {"estimated_xyz": [-0.08, 1.7, 0.777]}}, targets, [[0, 1.6, 1.05]]
+            )["ok"]
+        )
+
+    def test_task_validation_without_geometry_file(self):
+        with patch("builtins.open", side_effect=AssertionError("No geometry read permitted")):
+            self.assertEqual(list(targets_for("ACE")), ["A", "C", "E"])
+            for word in ("BOOK", "", "ABCDEF", "A C"):
+                with self.assertRaises(ValueError):
+                    targets_for(word)
+
+    def test_grasp_has_no_reference_image_dependency(self):
+        sim = SimpleNamespace(full_q=lambda: {}, names=[], move=lambda *a, **k: None)
+        with patch(
+            "pathlib.Path.read_text", side_effect=AssertionError("No reference data should be read")
+        ):
+            grasp = Grasp(sim)
+        self.assertIs(grasp.sim, sim)
+
+    def test_stereo_requires_current_identity_and_both_images(self):
+        tracker = StereoTracker(None)
+        self.assertFalse(tracker.locate("not_used.jpg", identified={})["ok"])
+        with patch("astrabot.stereo.cv2.imread", return_value=None):
+            with self.assertRaises(ValueError):
+                tracker.locate("missing.jpg", identified={"A": [320, 240]})
+
+    def test_textureless_pair_never_produces_grasp(self):
+        tracker = StereoTracker(None)
+        blank = np.full((480, 640, 3), 180, dtype=np.uint8)
+        result = tracker.locate_images(blank, blank, {"A": [320, 240]}, np.eye(4))
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["letters"], {})
+
+    def test_metric_plane_reconstruction_from_independently_rendered_pair(self):
+        tracker = StereoTracker(None)
+        g = tracker.geometry
+        texture = np.random.default_rng(5).integers(80, 150, (480, 640), dtype=np.uint8)
+        left = cv2.cvtColor(cv2.GaussianBlur(texture, (3, 3), 0), cv2.COLOR_GRAY2BGR)
+        cv2.putText(left, "A", (310, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 180, 0), 2)
+        homography = g.K_right @ (g.R + np.outer(g.T, [0, 0, 1]) / 0.7) @ np.linalg.inv(g.K_left)
+        right = cv2.warpPerspective(left, homography, (640, 480))
+        camera_to_world = np.diag([1.0, -1, -1, 1])
+        camera_to_world[2, 3] = 1.0
+        result = tracker.locate_images(left, right, {"A": [318, 242]}, camera_to_world)
+        self.assertTrue(result["ok"])
+        value = result["letters"]["A"]
+        np.testing.assert_allclose(
+            value["top_center_xyz"],
+            [-2 * 0.7 / g.K_left[0, 0], -2 * 0.7 / g.K_left[1, 1], 0.3],
+            atol=0.004,
+        )
+        self.assertAlmostEqual(value["grasp_center_xyz"][2], value["top_center_xyz"][2] - 0.005)
+        failed = tracker.locate_images(
+            left, np.full_like(right, 130), {"A": [318, 242]}, camera_to_world
+        )
+        self.assertFalse(failed["ok"])
+
+    def test_source_clearance_search_preserves_reachable_destination_and_grasp(self):
+        data = json.loads((Path(__file__).parent / "fixtures/stereo_e_preflight.json").read_text())
+        q = data["q"]
+        root = data["root_pose"]
+        sim = SimpleNamespace(
+            kin=Kinematics(root["actual_pos"], root["actual_quat_wxyz"]),
+            full_q=lambda: dict(q),
+            names=data["action_names"],
+            move=lambda *a, **k: None,
+        )
+        c = Grasp(sim)
+        (a, b) = c.tips(q)
+        d = a - b
+        d /= np.linalg.norm(d)
+        z = np.array([0.0, 0.0, 1.0])
+        z -= d * z.dot(d)
+        z /= np.linalg.norm(z)
+        c.base_rotation = Rotation.from_matrix(
+            np.diag([1.0, -1.0, -1.0]) @ np.column_stack([d, z, np.cross(d, z)]).T
+        )
+        xyz = np.array(data["grasp_center_xyz"])
+        plan = plan_pick_place(c, xyz, data["target"], 30)
+        self.assertGreaterEqual(plan["source_clearance_m"], 0.035)
+        self.assertLessEqual(plan["source_clearance_m"], 0.065)
+        self.assertAlmostEqual(
+            plan["above"][2], data["target"]["contact_z"] + plan["destination_clearance_m"]
+        )
+        self.assertGreaterEqual(plan["destination_clearance_m"], 0.03)
+        self.assertLessEqual(plan["destination_clearance_m"], 0.035)
+        np.testing.assert_array_equal(xyz, data["grasp_center_xyz"])
+        self.assertTrue(
+            all(
+                (
+                    p["position_error"] <= 0.003 and p["orientation_error"] <= 0.03
+                    for p in plan["preflight"]
+                )
+            )
+        )
+        np.testing.assert_allclose(plan["grasp_xyz"] - xyz, plan["pinch_offset_m"])
+        np.testing.assert_array_equal(plan["grasp_xyz"], xyz)
+        np.testing.assert_allclose(
+            plan["placed"][:2] - [data["target"]["target_x"], data["target"]["target_y"]],
+            plan["pinch_offset_m"][:2],
+        )
+        self.assertTrue(all((p["max_joint_step_rad"] <= 0.35 for p in plan["preflight"])))
+
+    def test_cartesian_step_refines_captured_runtime_ik_failure(self):
+        data = json.loads((Path(__file__).parent / "fixtures/stereo_ik_step.json").read_text())
+        q = data["q"]
+        root = data["root_pose"]
+        kin = Kinematics(root["actual_pos"], root["actual_quat_wxyz"])
+        goal = np.array(data["position"])
+        rotation = Rotation.from_quat(np.array(data["quat"])[[1, 2, 3, 0]])
+        with self.assertRaises(ValueError):
+            kin.solve(q, "left", goal, data["quat"])
+        (target, error, fraction) = continuous_ik_step(kin, q, goal, rotation, 1.0)
+        self.assertLess(fraction, 1.0)
+        self.assertLessEqual(error, 0.003)
+        self.assertLessEqual(max((abs(v - q[n]) for (n, v) in target.items())), 0.35)
+
+
+if __name__ == "__main__":
+    unittest.main()

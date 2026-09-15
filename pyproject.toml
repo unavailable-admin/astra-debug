@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astra-debug"
+version = "0.1.0"
+description = "G1 Scene11 stereo spelling controller"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24,<3",
+  "scipy>=1.10,<2",
+  "opencv-python-headless>=4.8,<5",
+  "Pillow>=10,<13",
+  "PyYAML>=6,<7",
+  "websockets>=15,<16",
+]
+
+[project.scripts]
+astrabot = "astrabot.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["astrabot*"]
+
+[tool.setuptools.package-data]
+astrabot = ["config/*.json", "config/*.yaml"]
+
+[tool.ruff]
+line-length = 100

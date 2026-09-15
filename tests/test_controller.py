@@ -45,6 +45,7 @@ class Controller(unittest.IsolatedAsyncioTestCase):
             sim = SimpleNamespace(
                 names=[],
                 frame_count=1,
+                save_observation=Mock(side_effect=lambda: out / f"observation_{sim.frame_count - 1:04d}.jpg"),
                 actions_sent=0,
                 initial_sim_time=0,
                 frame={"sim_time": 0, "dt": 1 / 30},
@@ -93,10 +94,15 @@ class Controller(unittest.IsolatedAsyncioTestCase):
                 patch.object(controller.cv2, "imread", return_value=np.zeros((480, 640, 3))),
                 patch.object(controller.websockets, "connect", return_value=socket),
                 patch.object(controller, "execute_pick_place", skill),
-                patch.object(controller, "export_video", return_value=None),
             ):
                 result = await controller.run(args)
             self.assertTrue(result["success_verified"])
+            self.assertFalse(result["recording_enabled"])
+            self.assertNotIn("video", result)
+            self.assertEqual(sim.save_observation.call_count, 4)
+            self.assertEqual(result["timing"]["stages"]["api_observation"]["count"], 4)
+            self.assertGreater(result["wall_seconds"], 0)
+            self.assertFalse(list(out.glob("*.mp4")))
             self.assertEqual(api.scene_candidates.await_count, 4)
             self.assertEqual([c.args[2] for c in skill.await_args_list], list("ACE"))
             self.assertEqual(result["simulation_seconds"], 3)

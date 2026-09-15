@@ -7,6 +7,7 @@ from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
 
 from .paths import CONFIG
+from .timing import Timings, timed
 
 MODEL = CONFIG / "g1_joint_model.json"
 
@@ -19,7 +20,8 @@ def transform(pos, quat):
 
 
 class Kinematics:
-    def __init__(self, root_pos, root_quat):
+    def __init__(self, root_pos, root_quat, timings=None):
+        self.timings = timings if timings is not None else Timings()
         self.joints = json.loads(MODEL.read_text())
         self.by_child = {j["child"]: j for j in self.joints}
         self.by_name = {j["name"]: j for j in self.joints}
@@ -38,6 +40,7 @@ class Kinematics:
             t[:3, :3] = Rotation.from_rotvec(axis * q.get(j["name"], 0.0)).as_matrix()
         return self.fk(q, j["parent"]) @ j["f0"] @ t @ j["invf1"]
 
+    @timed("ik_solve")
     def solve(self, q, side, pos, quat=None):
         names = [
             f"{side}_{suffix}_joint"

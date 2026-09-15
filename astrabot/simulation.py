@@ -5,11 +5,13 @@ import base64
 import io
 import json
 import math
+import time
 
 import numpy as np
 from PIL import Image
 
 from .kinematics import Kinematics, transform
+from .timing import Timings, server_frame_span
 
 
 def image_bytes(spec):
@@ -29,7 +31,7 @@ class SimulationResetError(RuntimeError):
 
 
 class Sim:
-    def __init__(self, ws, directory, root_pose=None):
+    def __init__(self, ws, directory, root_pose=None, timings=None):
         (self.ws, self.directory) = (ws, directory)
         self.root_pose = root_pose
         self.frame = None
@@ -39,13 +41,25 @@ class Sim:
         self.initial_sim_time = None
         self.speed = 1.0
         self.motion_stats = {"moves": 0, "interpolation_frames": 0, "hold_frames": 0}
+        self.timings = timings if timings is not None else Timings()
+        self.last_receive = {}
 
     async def receive(self, kind, timeout=45):
 
         async def read():
             while True:
-                msg = json.loads(await self.ws.recv())
+                start = time.perf_counter()
+                with self.timings.measure("ws_receive_wait"):
+                    raw = await self.ws.recv()
+                received = time.perf_counter()
+                with self.timings.measure("ws_json_decode"):
+                    msg = json.loads(raw)
                 if msg.get("type") == kind:
+                    self.last_receive = {
+                        "receive_wait_seconds": received - start,
+                        "json_decode_seconds": time.perf_counter() - received,
+                        "message_bytes": len(raw.encode("utf-8")) if isinstance(raw, str) else len(raw),
+                    }
                     return msg
                 if msg.get("ok") is False:
                     raise RuntimeError(str(msg))
@@ -53,23 +67,31 @@ class Sim:
         return await asyncio.wait_for(read(), timeout)
 
     async def send(self, msg):
-        await self.ws.send(json.dumps(msg, allow_nan=False))
+        with self.timings.measure("ws_json_encode"):
+            raw = json.dumps(msg, allow_nan=False)
+        with self.timings.measure("ws_send"):
+            await self.ws.send(raw)
 
     def record(self, frame):
         self.frame = frame
         if self.initial_sim_time is None:
             self.initial_sim_time = frame.get("sim_time")
-        stem = self.directory / f"frame_{self.frame_count:04d}"
         self.frame_count += 1
-        stem.with_suffix(".jpg").write_bytes(image_bytes(frame["image"]))
-        if "right" in frame.get("images", {}):
+        # Keep current feedback in memory; never decode or save motion images.
+        self.validate_frame(frame)
+
+    def save_observation(self):
+        """Save only the current stereo pair needed by VLM and stereo perception."""
+        frame = self.frame
+        if frame is None or "right" not in frame.get("images", {}):
+            raise ValueError("A current stereo frame is required")
+        stem = self.directory / f"observation_{self.frame_count - 1:04d}"
+        with self.timings.measure("observation_write"):
+            stem.with_suffix(".jpg").write_bytes(image_bytes(frame["image"]))
             stem.with_name(stem.name + "_right").with_suffix(".jpg").write_bytes(
                 image_bytes(frame["images"]["right"])
             )
-        stem.with_suffix(".json").write_text(
-            json.dumps({k: v for (k, v) in frame.items() if k not in ("image", "images")})
-        )
-        self.validate_frame(frame)
+        return stem.with_suffix(".jpg")
 
     def validate_frame(self, frame):
         from scipy.spatial.transform import Rotation
@@ -157,7 +179,7 @@ class Sim:
             self.root_pose is not None and (not ack.get("showroom_scene_11_robot_pose"))
         ):
             raise RuntimeError("Subscription did not provide the actual robot root pose")
-        self.kin = Kinematics(pose["actual_pos"], pose["actual_quat_wxyz"])
+        self.kin = Kinematics(pose["actual_pos"], pose["actual_quat_wxyz"], timings=self.timings)
         initial = await self.receive("step_result")
         self.record(initial["frames"][-1])
         for side in ("left", "right"):
@@ -229,8 +251,12 @@ class Sim:
         count = max(2, math.ceil(count / self.speed))
         hold = max(4, math.ceil(hold / self.speed)) if hold else 0
         actions = np.linspace(start, target, count + 1)[1:].tolist() + [target.tolist()] * hold
+        simulation_start = self.frame.get("sim_time")
+        exchange_start = time.perf_counter()
         await self.send({"type": "submit_actions", "actions": actions})
+        sent = time.perf_counter()
         ack = await self.receive("submit_actions_response")
+        acknowledged = time.perf_counter()
         if not ack.get("ok") or ack.get("accepted_count") != len(actions):
             raise RuntimeError(f"Action submission failed: {ack}")
         self.actions_sent += len(actions)
@@ -238,12 +264,40 @@ class Sim:
         self.motion_stats["interpolation_frames"] += count
         self.motion_stats["hold_frames"] += hold
         result = await self.receive("step_result", timeout=90)
-        for frame in result.get("frames", []):
-            self.record(frame)
-        if not result.get("frames"):
+        received = time.perf_counter()
+        frames = result.get("frames", [])
+        if not frames:
             raise RuntimeError("No post-action feedback")
+        with self.timings.measure("feedback_validation"):
+            for frame in frames:
+                self.record(frame)
+        processed = time.perf_counter()
+        span = server_frame_span(frames)
+        self.timings.add("action_round_trip", received - exchange_start)
+        if span is not None:
+            self.timings.add("server_frame_span", span)
+        simulation_end = frames[-1].get("sim_time")
+        timing = {
+            "send_seconds": sent - exchange_start,
+            "ack_wait_seconds": acknowledged - sent,
+            "result_wait_seconds": received - acknowledged,
+            "round_trip_seconds": received - exchange_start,
+            "result_message": dict(self.last_receive),
+            "feedback_seconds": processed - received,
+            "server_frame_span_seconds": span,
+            "server_execution_seconds": None,
+            "network_transfer_seconds": None,
+            "separation_status": "unavailable_without_server_batch_timers",
+            "simulation_seconds": (
+                simulation_end - simulation_start
+                if simulation_start is not None and simulation_end is not None else None
+            ),
+        }
         if self.directory is not None:
-            with (self.directory / "motion.jsonl").open("a") as stream:
+            with (
+                self.timings.measure("motion_log_write"),
+                (self.directory / "motion.jsonl").open("a") as stream,
+            ):
                 stream.write(
                     json.dumps(
                         {
@@ -253,6 +307,7 @@ class Sim:
                             "hold_frames": hold,
                             "end_frame": self.frame_count - 1,
                             "frames": len(actions),
+                            "timing": timing,
                         }
                     )
                     + "\n"

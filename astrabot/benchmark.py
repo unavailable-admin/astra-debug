@@ -202,7 +202,7 @@ def main(argv=None):
             "reason": report.get("reason", ""),
             "error": report.get("error", ""),
             "returncode": code,
-            "video": report.get("video", ""),
+            "wall_seconds": report.get("wall_seconds"),
             "report": str(reportfile),
         }
         write_json(trialdir / "result.json", result)

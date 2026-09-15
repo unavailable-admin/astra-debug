@@ -5,6 +5,8 @@ import json
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from .timing import Timings, timed
+
 NAMES = [
     "lh_index_mcp_pitch",
     "lh_index_dip",
@@ -42,6 +44,9 @@ def continuous_ik_step(kin, q, goal, goal_r, fraction):
 class Grasp:
     def __init__(self, sim):
         self.sim = sim
+        self.timings = getattr(sim, "timings", None)
+        if self.timings is None:
+            self.timings = Timings()
         self.rest = {
             n: v for (n, v) in sim.full_q().items() if n in sim.names and n.startswith("left_")
         }
@@ -108,6 +113,7 @@ class Grasp:
             self.set_yaw(angle)
             await self.center(xyz, nominal, settle=abs(angle - yaw) < 1e-08)
 
+    @timed("ik_preflight")
     def preflight(self, waypoints):
         """Check grasp-center waypoints, including rotations, before contact."""
         q = dict(self.sim.full_q())

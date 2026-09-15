@@ -7,7 +7,6 @@ poses and the old reference-letter homography are never read by this runner.
 import argparse
 import asyncio
 import json
-import subprocess
 import time
 from pathlib import Path
 
@@ -22,6 +21,7 @@ from .motion import Grasp, execute_pick_place
 from .paths import DEFAULT_URI, ROOT
 from .simulation import Sim
 from .stereo import StereoTracker
+from .timing import Timings
 from .vision import AstraVision, identified_pixels
 
 
@@ -78,52 +78,8 @@ def completion_checks(estimates, targets, hand_points, tolerance=0.018):
     return result
 
 
-def export_video(out, sim):
-    if sim.frame_count < 1:
-        return None
-    dt = sim.frame.get("dt", 1 / 30)
-    destination = out / f"stereo_{sim.speed:g}x.mp4"
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-nostdin",
-            "-threads",
-            "1",
-            "-framerate",
-            str(1 / dt),
-            "-i",
-            str(out / "frame_%04d.jpg"),
-            "-threads",
-            "1",
-            "-framerate",
-            str(1 / dt),
-            "-i",
-            str(out / "frame_%04d_right.jpg"),
-            "-filter_complex_threads",
-            "1",
-            "-filter_complex",
-            "[0:v][1:v]hstack=inputs=2[v]",
-            "-map",
-            "[v]",
-            "-c:v",
-            "libx264",
-            "-threads",
-            "1",
-            "-pix_fmt",
-            "yuv420p",
-            "-movflags",
-            "+faststart",
-            str(destination),
-        ],
-        check=True,
-    )
-    return str(destination)
-
-
 async def run(args):
+    timings = Timings()
     targets = targets_for(args.word, args.start_x)
     word = "".join(targets)
     speed = getattr(args, "speed", 1.0)
@@ -147,6 +103,7 @@ async def run(args):
         "object_truth_used_for_control": False,
         "targets": targets,
         "inspect_only": args.inspect_only,
+        "recording_enabled": False,
     }
     sim = None
 
@@ -157,14 +114,20 @@ async def run(args):
                 frames=sim.frame_count,
                 simulation_seconds=sim.frame["sim_time"] - sim.initial_sim_time if sim.frame else 0,
             )
-        (out / "report.json").write_text(json.dumps(report, indent=2))
+        report["timing"] = timings.snapshot()
+        report["wall_seconds"] = report["timing"]["wall_seconds"]
+        report["timing"]["server_execution_seconds"] = None
+        report["timing"]["network_transfer_seconds"] = None
+        report["timing"]["separation_status"] = "unavailable_without_server_batch_timers"
+        with timings.measure("report_write"):
+            (out / "report.json").write_text(json.dumps(report, indent=2))
 
     try:
         api = AstraVision(out / "api", timeout=args.api_timeout)
         async with websockets.connect(
             args.uri, proxy=None, ping_interval=None, open_timeout=10, max_size=128 * 1024 * 1024
         ) as ws:
-            sim = Sim(ws, out, root_pose={"pos": [0.003253, 1.495587, 0.76]})
+            sim = Sim(ws, out, root_pose={"pos": [0.003253, 1.495587, 0.76]}, timings=timings)
             sim.expected_scene = "showroom_scene_11_stereo"
             sim.speed = speed
             await sim.send({"type": "status"})
@@ -189,11 +152,13 @@ async def run(args):
             }
             refresh_count = 0
             for turn in range(args.max_skills + 4):
-                frame = out / f"frame_{sim.frame_count - 1:04d}.jpg"
-                decision = await observe_scene(api, sim, frame, word, args.api_max_attempts)
+                frame = sim.save_observation()
+                with timings.measure("api_observation"):
+                    decision = await observe_scene(api, sim, frame, word, args.api_max_attempts)
                 await sim.check_live_status()
-                pixels = identified_pixels(decision, cv2.imread(str(frame)).shape, word)
-                vision = tracker.locate(frame, identified=pixels)
+                with timings.measure("stereo_perception"):
+                    pixels = identified_pixels(decision, cv2.imread(str(frame)).shape, word)
+                    vision = tracker.locate(frame, identified=pixels)
                 estimates = vision["letters"] if vision["ok"] else {}
                 action, letter, reason = select_action(decision, estimates, targets)
                 q = sim.full_q()
@@ -262,12 +227,6 @@ async def run(args):
         report.update(reason="stopped_on_error", error=f"{type(exc).__name__}: {exc}")
         print("STOP", report["error"], flush=True)
     finally:
-        save()
-        if sim and sim.frame_count:
-            try:
-                report["video"] = export_video(out, sim)
-            except Exception as exc:
-                report["video_error"] = str(exc)
         save()
     print("REPORT", json.dumps({k: v for k, v in report.items() if k != "events"}), flush=True)
     return report

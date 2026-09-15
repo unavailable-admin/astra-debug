@@ -27,7 +27,7 @@ scripts/           # 使用当前机器已验证环境的启动脚本
 
 ## 安装与配置
 
-Python≥3.10，系统需安装 `ffmpeg` 用于录像。仓库目录下运行：
+Python≥3.10。运行时不录像，也不需要 `ffmpeg`。仓库目录下运行：
 
 ```bash
 python3 -m venv .venv
@@ -99,7 +99,35 @@ python -m astrabot run --word ACE --speed 1.0 --max-skills 4
 `--word` 支持1～4个不重复字母，仍需可见且可达；目前只用左手。
 `--inspect-only` 只观察和定位，不执行抓放，但会调整机器人观察姿态。
 
-新记录和录像写入当前工作目录的 `outputs/`，自动创建并被 Git 忽略。
+日志和识别所需的观测图片写入当前工作目录的 `outputs/`，自动创建并被 Git 忽略。
+运动过程不保存逐帧图片或逐帧状态文件，不生成视频。每轮识别前仅保存当前左右目
+`observation_*.jpg`，以及 API 候选图和识别记录。
+
+`report.json` 中的 `wall_seconds` 是 run 阶段墙钟时间（不含单独执行的 reset），
+`simulation_seconds` 是实际仿真推进时间。`timing.stages` 包含各项调用次数、
+累计秒数、单次最大秒数和失败次数：
+
+| 字段 | 含义 |
+|---|---|
+| `ik_solve` | 所有 IK 求解，包含失败求解和预检内的求解 |
+| `ik_preflight` | 轨迹预检全段，包含候选路径失败重试 |
+| `action_round_trip` | 动作提交到完整结果解析完成，含服务端执行及通信 |
+| `server_frame_span` | 同批首末帧的服务端 `wall_time` 差；不包含第一帧生成前的时间 |
+| `ws_send` / `ws_receive_wait` | WebSocket 发送 / 接收等待；等待中包含服务端执行，不能当作纯网络耗时 |
+| `ws_json_encode` / `ws_json_decode` | 客户端消息序列化 / 解析 |
+| `feedback_validation` | 本地逐帧反馈校验，不含图片解码或写盘 |
+| `api_observation` / `stereo_perception` | API 观测（含候选图、状态检查及重试）/ 双目定位 |
+| `observation_write` / `motion_log_write` / `report_write` | 观测图 / 动作日志 / 报告写入 |
+
+这些计时有嵌套，**不可全部相加**：例如预检包含 IK，动作往返包含收发和解析。
+`report_write` 不含正在写入的那次报告本身。`motion.jsonl` 每批动作的 `timing`
+还记录发送、ACK 等待、结果等待、反馈处理、消息字节数及该批仿真时间。
+
+当前协议没有完整的服务端批次计时，`server_execution_seconds` 和
+`network_transfer_seconds` 明确记为 `null`，而不是零或推算值。
+服务端帧间隔包含两帧之间的物理步进、渲染等工作，不能等同于完整批次执行耗时。
+精确分离还需要服务端增加单调时钟计时：动作执行（含明确的渲染范围）、
+结果编码和发送阶段；不能直接相减两台机器的绝对时间戳。
 可用 `--output` 指定一个尚不存在的目录。旧 `runs/` 已删除，代码不再依赖它。
 
 ```bash

@@ -5,17 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "astra-debug"
 version = "0.1.0"
-description = "G1 Scene11 stereo spelling controller"
+description = "G1 stereo spelling with Scene11 simulation and a standalone robot backend"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.24,<3",
   "scipy>=1.10,<2",
-  "opencv-python-headless>=4.8,<5",
+  "opencv-python-headless>=4.8,<6",
   "Pillow>=10,<13",
   "PyYAML>=6,<7",
-  "websockets>=15,<16",
+  "websockets>=15,<17",
 ]
+
+[project.optional-dependencies]
+robot = ["mujoco>=3.3,<4", "numba>=0.61,<0.67"]
+dev = ["black>=24", "ruff>=0.9", "pre-commit>=4", "pytest>=8"]
 
 [project.scripts]
 astrabot = "astrabot.__main__:main"
@@ -24,7 +28,11 @@ astrabot = "astrabot.__main__:main"
 include = ["astrabot*"]
 
 [tool.setuptools.package-data]
-astrabot = ["config/*.json", "config/*.yaml"]
+astrabot = ["config/*.json", "config/*.yaml", "robot/*.html", "robot/assets/*.json", "robot/assets/*.urdf", "robot/assets/*.xml", "robot/assets/*.npz", "robot/assets/*.cpp"]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120

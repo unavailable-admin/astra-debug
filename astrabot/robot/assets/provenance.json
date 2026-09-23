@@ -1,0 +1,11 @@
+{
+  "source_commit": "c599f49c",
+  "worktree": "robot-control-alt-strategy-20260913",
+  "uncommitted_reference": true,
+  "files": {
+    "assets/unitree_ros/robots/g1_with_o6_description_for_foxglove/g1_29dof_with_linkinO6.urdf": "50ef742b8b2263eeb8439a4aa9ea42bc68fff1140efad93f3d04a5a9d934a5e0",
+    "modules/cup_stacking/sense_modules_cup_stacking/hand_geometry.py": "2270b042f88b7f7c3867d04ff761276634c9047cd1e8484ceba632c6ebd40863",
+    "modules/robot_control/assets/gravity/g1_with_handsO6_waic_dynamics.xml": "8db19da04794a825584c015b9ea4a8f94a78e410b3447a9622284c6f49f3b0d9"
+  },
+  "hand_boxes": "Conservative bounds from original collision mesh vertices; no collision mesh runtime dependency."
+}

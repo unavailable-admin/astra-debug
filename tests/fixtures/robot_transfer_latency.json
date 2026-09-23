@@ -1,0 +1,335 @@
+{
+  "config": {
+    "motion_checks": {
+      "planning_stable_window_s": 0.3,
+      "planning_settle_timeout_s": 15.0,
+      "planning_body_drift_rad": 0.1,
+      "planning_recheck_rad": 0.03,
+      "escape_recheck_rad": 0.001,
+      "wrist_planning_drift_rad": 0.001,
+      "planning_hand_drift_raw": 5.0,
+      "fixed_hand_drift_raw": 1.0,
+      "planning_refreshes": 2,
+      "escape_refreshes": 2,
+      "motion_body_drift_rad": 0.05,
+      "tracking_wait_ratio": 0.4,
+      "tracking_resume_ratio": 0.75,
+      "tracking_resume_stable_s": 0.1,
+      "tracking_resume_speed_rad_s": 0.02,
+      "tracking_speed_window_s": 0.05,
+      "tracking_resume_peak_speed_rad_s": 0.06,
+      "tracking_resume_ramp_s": 0.3,
+      "adaptive_brake_horizon_s": 0.1,
+      "adaptive_brake_speed_rad_s": 0.02,
+      "tracking_wait_timeout_s": 5.0,
+      "tracking_transient_s": 0.25,
+      "escape_tracking_soft_rad": 0.005,
+      "escape_tracking_hard_rad": 0.01,
+      "wrist_tracking_rad": 0.01,
+      "prepare_arrival_rad": 0.05,
+      "prepare_command_lead_rad": 0.08,
+      "prepare_arrival_timeout_s": 3.0,
+      "prepare_thigh_clearance_m": 0.00025,
+      "escape_arrival_rad": 0.005,
+      "wrist_arrival_rad": 0.01,
+      "wrist_reverse_rad": 0.002,
+      "wrist_envelope_rad": 0.01,
+      "wrist_entry_overshoot_rad": 0.002,
+      "wrist_trigger_margin_rad": 0.01,
+      "wrist_target_margin_rad": 0.05,
+      "escape_speed_rad_s": 0.09,
+      "wrist_speed_rad_s": 0.06,
+      "path_step_rad": 0.001,
+      "cartesian_step_m": 0.005,
+      "rotation_step_rad": 0.03,
+      "ik_position_error_m": 0.003,
+      "ik_rotation_error_rad": 0.03,
+      "ik_branch_jump_rad": 0.35,
+      "rest_entry_rad": 0.5,
+      "raised_entry_rad": 0.05,
+      "escape_elbow_entry_rad": 0.25,
+      "escape_shoulder_roll_rad": 0.2,
+      "escape_shoulder_yaw_rad": 0.04,
+      "scene_pose_rad": 0.003,
+      "scene_hand_raw": 2.0,
+      "ready_plan_rad": 0.01,
+      "scene_task_rad": 0.005,
+      "scene_task_hand_raw": 1.0,
+      "target_observation_m": 0.01,
+      "trial_joint_step_rad": 0.15,
+      "trial_joint_substep_rad": 0.1,
+      "trial_right_arm_rad": 0.005,
+      "pinch_step_m": 0.006,
+      "pinch_substep_m": 0.005,
+      "pinch_arrival_m": 0.0015,
+      "pinch_rotation_rad": 0.04,
+      "pinch_hand_step_raw": 2.0,
+      "prepare_planning_timeout_s": 180.0,
+      "prepare_motion_timeout_s": 120.0,
+      "prepare_motion_extra_s": 30.0,
+      "recovery_timeout_s": 360.0,
+      "release_timeout_s": 15.0
+    },
+    "standing_mode": 4,
+    "interface": "enP2p1s0",
+    "left_can": "can4",
+    "right_can": "can5",
+    "camera_device": "/dev/video0",
+    "camera_width": 3840,
+    "camera_height": 1200,
+    "camera_fps": 30.0,
+    "joint_speed": 0.45,
+    "cartesian_speed": 0.03,
+    "hand_speed": 120,
+    "feedback_timeout": 0.25,
+    "lease_timeout": 2.0,
+    "tracking_error": 0.08,
+    "arrival_error": 0.03,
+    "hand_arrival_error": 5.0,
+    "settle_timeout": 5.0,
+    "motor_temperature_limit": 90.0,
+    "shell_temperature_limit": 90.0,
+    "hand_temperature_limit": 90.0,
+    "hand_torque_raw": 10,
+    "scene_measured": true,
+    "table_min": [
+      0.10134972919822431,
+      -0.6570929596882001,
+      -0.7503578080027133
+    ],
+    "table_max": [
+      0.8221152464899268,
+      0.6235278159490635,
+      0.10492353655055872
+    ],
+    "table_plane": [
+      0.15619596329376398,
+      0.0022882325755236195,
+      -0.024799484021255837
+    ],
+    "table_footprint": [
+      [
+        0.19741995573569335,
+        0.6235278159490635
+      ],
+      [
+        0.10134972919822431,
+        -0.6069062113664055
+      ],
+      [
+        0.7260450199524578,
+        -0.6570929596882001
+      ],
+      [
+        0.8221152464899268,
+        0.5733410676272689
+      ]
+    ],
+    "table_observed": [
+      [
+        0.19741995573569335,
+        0.6235278159490635
+      ],
+      [
+        0.10134972919822431,
+        -0.6069062113664055
+      ],
+      [
+        0.7260450199524578,
+        -0.6570929596882001
+      ],
+      [
+        0.8221152464899268,
+        0.5733410676272689
+      ]
+    ],
+    "table_uncertainty": 0.005,
+    "clearance": 0.005,
+    "obstacles": [],
+    "ready_arms": [
+      -0.06736489,
+      0.20515722,
+      0.08011083,
+      -0.57397872,
+      0.01750336,
+      -0.02328863,
+      0.017542,
+      -0.06736489,
+      -0.20515722,
+      -0.08011083,
+      -0.57397872,
+      -0.01750336,
+      -0.02328863,
+      -0.017542
+    ],
+    "ready_hands": [
+      47.8125,
+      47.8125,
+      47.8125,
+      175.3125,
+      167.06896551724137,
+      67.50000000000001,
+      47.8125,
+      47.8125,
+      47.8125,
+      175.3125,
+      167.06896551724137,
+      67.50000000000001
+    ],
+    "tcp_offset": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "tcp_measured": false,
+    "grasp_rotation_xyzw": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "open_left": [
+      47.8125,
+      47.8125,
+      47.8125,
+      175.3125,
+      167.06896551724137,
+      67.50000000000001
+    ],
+    "closed_left": [
+      47.8125,
+      47.8125,
+      47.8125,
+      140.25,
+      114.31034482758618,
+      67.50000000000001
+    ],
+    "target_origin": [
+      0.35,
+      0.18,
+      0.050280984995155806
+    ],
+    "target_axis": [
+      0,
+      -1,
+      0
+    ],
+    "target_spacing": 0.09,
+    "calibration": "/data/wuxiaoning/Novus/.worktrees/spelling-game-20260915/external/astra-debug/outputs/calibration-grasp-assessment-20260920/camera-torso-local-candidate.json",
+    "calibration_report": "",
+    "trial_lift_height_m": 0.12,
+    "trial_speed_scale": 4.0,
+    "trial_grip_mode": "supervised_position",
+    "trial_require_grip_confirmation": false,
+    "trial_grip_gap_m": 0.038,
+    "trial_thumb_yaw_offset_raw": 10.055015305021266,
+    "trial_grasp_offset": [
+      0,
+      -0.01,
+      0
+    ],
+    "tactile_threshold": 8.0,
+    "output": "/data/wuxiaoning/Novus/.worktrees/spelling-game-20260915/external/astra-debug/outputs/spelling-1790061187847980111/first-scene/scene/executor"
+  },
+  "body": [
+    -0.30152949690818787,
+    -0.01083160936832428,
+    0.013686517253518105,
+    0.6267334222793579,
+    -0.4710616171360016,
+    -0.004086657892912626,
+    -0.2665121257305145,
+    -0.0031617041677236557,
+    -0.002156095113605261,
+    0.6268782615661621,
+    -0.48992863297462463,
+    0.010345296002924442,
+    -0.0022498385515064,
+    -0.0017597245750948787,
+    -0.008557681925594807,
+    -0.8809364438056946,
+    0.3188043534755707,
+    -1.0344064235687256,
+    0.1372433453798294,
+    0.7755711078643799,
+    1.0973955392837524,
+    -0.5836676955223083,
+    -0.0665244311094284,
+    -0.20449881255626678,
+    -0.07704658061265945,
+    -0.5717194676399231,
+    -0.01690974272787571,
+    -0.024387897923588753,
+    -0.01812014915049076
+  ],
+  "hands": [
+    48.0,
+    48.0,
+    48.0,
+    147.0,
+    127.99999999999999,
+    76.99999999999999,
+    48.0,
+    48.0,
+    48.0,
+    174.99999999999997,
+    166.99999999999997,
+    64.99999999999999
+  ],
+  "request": {
+    "action": "transfer_path",
+    "holding": true,
+    "preserve_right": true,
+    "center": [
+      0.3878878229365188,
+      0.0264599111539311,
+      0.19217918828564268
+    ],
+    "goal_center": [
+      0.3878878229365188,
+      0.0264599111539311,
+      0.19217918828564268
+    ],
+    "rotation": [
+      [
+        0.898950207695101,
+        0.4380494640075257,
+        -0.0010914062735718293
+      ],
+      [
+        0.006761743319055449,
+        -0.01636734266732327,
+        -0.9998431821647319
+      ],
+      [
+        -0.4379986334593086,
+        0.8988018564604379,
+        -0.017675404126875845
+      ]
+    ],
+    "hands": [
+      47.8125,
+      47.8125,
+      47.8125,
+      147.20980489651265,
+      125.99999999999999,
+      77.55501530502129,
+      48.0,
+      48.0,
+      48.0,
+      174.99999999999997,
+      166.99999999999997,
+      66.0
+    ],
+    "right_arms": [
+      -0.0665244311094284,
+      -0.20477445423603058,
+      -0.07874834537506104,
+      -0.5728939175605774,
+      -0.01696966215968132,
+      -0.023608922958374023,
+      -0.01810816489160061
+    ],
+    "obstacles": []
+  }
+}

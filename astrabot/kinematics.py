@@ -12,6 +12,20 @@ from .timing import Timings, timed
 MODEL = CONFIG / "g1_joint_model.json"
 
 
+def solve_arm_pose(fk, initial, lower, upper, position, rotation):
+    """Common bounded arm IK objective for simulator and physical model replay."""
+
+    def residual(angles):
+        pose = fk(angles)
+        terms = [pose[:3, 3] - position]
+        if rotation is not None:
+            terms.append(0.12 * Rotation.from_matrix(rotation.T @ pose[:3, :3]).as_rotvec())
+        terms.append(0.001 * (angles - initial))
+        return np.concatenate(terms)
+
+    return least_squares(residual, np.clip(initial, lower + 1e-6, upper - 1e-6), bounds=(lower, upper), max_nfev=150).x
+
+
 def transform(pos, quat):
     t = np.eye(4)
     t[:3, :3] = Rotation.from_quat(np.asarray(quat)[[1, 2, 3, 0]]).as_matrix()
@@ -59,18 +73,15 @@ class Kinematics:
         hi = np.array([self.by_name[n]["upper"] for n in names])
         goal_rot = transform([0, 0, 0], quat)[:3, :3] if quat is not None else None
 
-        def residual(x):
-            t = self.fk(dict(q, **dict(zip(names, x))), f"{side}_wrist_yaw_link")
-            terms = [t[:3, 3] - pos]
-            if goal_rot is not None:
-                terms.append(0.12 * Rotation.from_matrix(goal_rot.T @ t[:3, :3]).as_rotvec())
-            terms.append(0.001 * (x - initial))
-            return np.concatenate(terms)
-
-        result = least_squares(
-            residual, np.clip(initial, lo + 1e-6, hi - 1e-6), bounds=(lo, hi), max_nfev=150
+        result = solve_arm_pose(
+            lambda angles: self.fk(dict(q, **dict(zip(names, angles))), f"{side}_wrist_yaw_link"),
+            initial,
+            lo,
+            hi,
+            np.asarray(pos),
+            goal_rot,
         )
-        target = dict(zip(names, result.x.tolist()))
+        target = dict(zip(names, result.tolist()))
         actual = self.fk(dict(q, **target), f"{side}_wrist_yaw_link")
         err = float(np.linalg.norm(actual[:3, 3] - pos))
         if err > 0.015:

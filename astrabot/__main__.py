@@ -6,7 +6,7 @@ import sys
 
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
-    commands = {"run": "controller", "reset": "reset", "benchmark": "benchmark"}
+    commands = {"run": "controller", "reset": "reset", "benchmark": "benchmark", "robot": "robot.__main__"}
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=commands)
     if not args or args[0] not in commands:

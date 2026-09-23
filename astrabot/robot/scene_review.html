@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick A · 现场定位</title>
+<style>
+body{font:16px system-ui,sans-serif;margin:24px;background:#f4f6f8;color:#182330}main{max-width:1350px;margin:auto}
+h1{font-size:26px}button,input{font:inherit;padding:8px;margin:4px}button{cursor:pointer;border:1px solid #a8b5c5;border-radius:6px;background:white}button.active{background:#cce4ff}button:disabled{opacity:.5;cursor:default}
+canvas{width:100%;height:auto;border:1px solid #8996a7;touch-action:none;background:#222}section{background:white;padding:16px;margin:16px 0;border-radius:8px}label{display:inline-block;margin:6px}input[type=number]{width:85px}#summary,#status{white-space:pre-wrap;overflow-wrap:anywhere}#preview{width:100%}.error{color:#ad1c22}.good{color:#176b39}pre{white-space:pre-wrap;word-break:break-all}small{color:#526174}
+</style>
+<main>
+<h1>Pick A · 现场定位</h1>
+<p>只处理这次照片，不控制机器人。选定 A 后，其他积木作为障碍处理，无需逐个填写字母。</p>
+<small id="source"></small>
+<section>
+<p>① 拖框包含桌上全部积木，排除背景。② 点选 A。③ 依次点近左桌角、沿近边向右的另一个点（不是远边）。</p>
+<div id="modes"><button data-mode="roi" class="active">① 框选积木区域</button><button data-mode="target">② 点选 A</button><button data-mode="edge">③ 标近边两点</button><button data-mode="toggle">增删误选标记</button></div>
+<p id="selection">等待框选</p><canvas id="scene"></canvas>
+<p><label>桌宽 mm <input id="width" type="number" value="1200" min="300" max="2500"></label><label>桌深 mm <input id="depth" type="number" value="600" min="200" max="1500"></label><label>桌板厚 mm <input id="thickness" type="number" value="10" min="1" max="100"></label></p>
+<small>至少四块积木分散在桌面上用于双目拟合。漏掉的积木没有候选框，或桌上还有杂物时，请先整理后重拍，不能确认完整。</small>
+<p><button id="build">生成定位预览</button></p>
+</section>
+<p id="status" role="status">载入照片中…</p>
+<section id="review" hidden>
+<h2>检查本次定位</h2><p>绿圈是 A，蓝圈是双目定位的积木，橙圈是借助桌面和已知积木高度推断的位置（障碍范围额外扩大 20 mm），黄线是桌面范围。确认框住正确对象和桌面。</p>
+<img id="preview" alt="本次桌面和积木定位标注图"><pre id="summary"></pre>
+<label><input type="checkbox" id="ackA">绿圈确实是字母朝上的 A</label><br>
+<label><input type="checkbox" id="ackAll">桌上只有 40 mm 积木，所有积木均已标出，无其他杂物或遗漏</label><br>
+<label><input type="checkbox" id="ackTable">桌面边界与宽深正确，现场自拍照后没有变化</label>
+<p><button id="approve">确认并导出场景</button></p>
+<small>导出只代表确认本次照片的场景，不代表指尖标定、轨迹或实物抓取已通过。程序不会启动机器人。</small>
+</section>
+<section id="done" hidden><h2>已导出</h2><pre id="files"></pre><p>下一步离线规划：</p><pre id="command"></pre></section>
+</main>
+<script>
+'use strict';
+const token = new URLSearchParams(location.search).get('token');
+const url = path => path + '?token=' + encodeURIComponent(token);
+const $ = id => document.getElementById(id);
+const canvas=$('scene'), ctx=canvas.getContext('2d'), photo=new Image();
+let data, mode='roi', selected=new Set(), target=null, edge=[], start=null, rectangle=null, draft=null, busy=false, exported=false;
+function message(text,error=false){$('status').textContent=text;$('status').className=error?'error':'good';}
+function invalidate(){draft=null;$('review').hidden=true;for(const id of ['ackA','ackAll','ackTable'])$(id).checked=false;}
+function point(event){const r=canvas.getBoundingClientRect();return [(event.clientX-r.left)*canvas.width/r.width,(event.clientY-r.top)*canvas.height/r.height];}
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(photo,0,0);ctx.font='20px sans-serif';ctx.lineWidth=3;
+ if(rectangle){ctx.strokeStyle='#ffee00';ctx.strokeRect(rectangle[0],rectangle[1],rectangle[2]-rectangle[0],rectangle[3]-rectangle[1]);}
+ for(const c of data.candidates){const [x,y,w,h]=c.bbox;ctx.strokeStyle=c.id===target?'#00ff55':selected.has(c.id)?'#40cfff':'#b9b9b9';ctx.fillStyle=ctx.strokeStyle;ctx.strokeRect(x-3,y-3,w+6,h+6);ctx.fillText(c.id===target?'A':String(c.id),x,y-8);}
+ for(let i=0;i<edge.length;i++){ctx.strokeStyle='#ff44ff';ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(...edge[i],8,0,Math.PI*2);ctx.stroke();ctx.fillText(i===0?'近左角':'近边方向',edge[i][0]+12,edge[i][1]);}
+ if(edge.length===2){ctx.beginPath();ctx.moveTo(...edge[0]);ctx.lineTo(...edge[1]);ctx.stroke();}
+ $('selection').textContent=`已选 ${selected.size} 块；A：${target===null?'未选':target}；桌边点：${edge.length}/2`;
+}
+for(const button of document.querySelectorAll('[data-mode]'))button.onclick=()=>{if(busy||exported)return;mode=button.dataset.mode;for(const b of document.querySelectorAll('[data-mode]'))b.classList.toggle('active',b===button);};
+canvas.onpointerdown=event=>{if(busy||exported||!data)return;canvas.setPointerCapture(event.pointerId);start=point(event);};
+canvas.onpointerup=event=>{
+ if(!start||busy||exported)return;const end=point(event);invalidate();
+ if(mode==='roi'){
+  rectangle=[Math.min(start[0],end[0]),Math.min(start[1],end[1]),Math.max(start[0],end[0]),Math.max(start[1],end[1])];
+  selected=new Set(data.candidates.filter(c=>c.pixel[0]>=rectangle[0]&&c.pixel[0]<=rectangle[2]&&c.pixel[1]>=rectangle[1]&&c.pixel[1]<=rectangle[3]).map(c=>c.id));
+  if(!selected.has(target))target=null;
+ }else if(mode==='edge'){
+  if(edge.length===2)edge=[];edge.push(end);
+ }else{
+  const distances=data.candidates.map(c=>[Math.hypot(c.pixel[0]-end[0],c.pixel[1]-end[1]),c.id]).sort((a,b)=>a[0]-b[0]);
+  if(distances.length&&distances[0][0]<=45){const id=distances[0][1];if(mode==='target'){target=id;selected.add(id);}else if(selected.has(id)){selected.delete(id);if(target===id)target=null;}else selected.add(id);}
+ }
+ start=null;draw();
+};
+for(const id of ['width','depth','thickness'])$(id).oninput=()=>{if(!exported)invalidate();};
+async function post(path,body){const response=await fetch(url(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw Error(result.error||'请求失败');return result;}
+function lock(value){busy=value;$('build').disabled=value;$('approve').disabled=value;}
+$('build').onclick=async()=>{
+ if(busy||exported)return;invalidate();lock(true);message('正在进行本地双目定位和桌面拟合…');
+ try{
+  draft=await post('/build',{cube_ids:[...selected].sort((a,b)=>a-b),target_id:target,near_edge_px:edge,table_width_mm:Number($('width').value),table_depth_mm:Number($('depth').value),table_thickness_mm:Number($('thickness').value)});
+  $('preview').src=url('/preview')+'&draft='+draft.draft_hash;$('summary').textContent=`积木数量：${draft.cube_count}\nA 中心（机器人坐标，mm）：${draft.A_center_mm.join(', ')}\n抓取中心（mm）：${draft.grasp_center_mm.join(', ')}\n桌面最大拟合残差：${draft.table_residual_max_mm.toFixed(2)} mm`;
+  $('summary').textContent+='\n借助桌面估计的非目标障碍：'+(draft.modeled_obstacles.join(', ')||'无');
+  $('review').hidden=false;message('定位完成，请检查下方预览后确认。');$('review').scrollIntoView({behavior:'smooth'});
+ }catch(error){message(error.message,true);}finally{lock(false);}
+};
+$('approve').onclick=async()=>{
+ if(busy||exported||!draft)return;lock(true);
+ try{
+  const result=await post('/approve',{draft_hash:draft.draft_hash,target_confirmed:$('ackA').checked,all_cubes_marked:$('ackAll').checked,table_confirmed:$('ackTable').checked});
+  exported=true;$('review').hidden=true;$('done').hidden=false;$('files').textContent=result.output+'\n'+result.files.join('\n');$('command').textContent=result.planning_command;message('已导出场景，未发送任何机器人命令。终端程序将正常结束。');
+ }catch(error){message(error.message,true);lock(false);}
+};
+fetch(url('/data')).then(async response=>{if(!response.ok)throw Error('页面链接无效，请使用终端给出的完整地址');data=await response.json();canvas.width=data.width;canvas.height=data.height;$('source').textContent=`照片：${data.capture}\n采集时间：${data.capture_time}`;photo.onload=()=>{draw();message('照片已载入，请按 ①②③ 标注。');};photo.src=url('/image');}).catch(error=>message(error.message,true));
+</script></html>

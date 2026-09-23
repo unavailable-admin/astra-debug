@@ -19,6 +19,41 @@ DEFAULT_CALIBRATION = CONFIG / "g1_head_camera_calibrations.yaml"
 CV_TO_GL = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
+def undistort_checked(points, intrinsic, distortion):
+    """Reject inaccurate inverse distortion and locally folded camera mappings.
+
+    A successful numerical inverse is not evidence of metric calibration accuracy.
+    The 0.25 pixel roundtrip budget is separate from stereo correspondence error.
+    """
+    points = np.asarray(points, float)
+    normalized = cv2.undistortPoints(points[:, None, :], intrinsic, distortion).reshape(-1, 2)
+    if not np.isfinite(normalized).all():
+        raise ValueError("Distortion inverse is not finite")
+
+    def project(coordinates):
+        rays = np.column_stack((coordinates, np.ones(len(coordinates))))
+        return cv2.projectPoints(rays, np.zeros(3), np.zeros(3), intrinsic, distortion)[0].reshape(-1, 2)
+
+    projected = project(normalized)
+    if not np.isfinite(projected).all() or np.any(np.linalg.norm(projected - points, axis=1) > 0.25):
+        raise ValueError("Distortion inverse exceeds 0.25 pixel roundtrip budget")
+    # Use the forward model, including all OpenCV pinhole coefficients, to check
+    # local orientation and conditioning independently of the inverse solver.
+    step = 1e-5
+    focal = np.array([intrinsic[0, 0], intrinsic[1, 1]])
+    columns = [
+        (project(normalized + offset) - project(normalized - offset)) / (2 * step * focal)
+        for offset in (np.array([step, 0]), np.array([0, step]))
+    ]
+    jacobian = np.stack(columns, axis=-1)
+    if not np.isfinite(jacobian).all():
+        raise ValueError("Distortion forward Jacobian is not finite")
+    symmetric = (jacobian + np.swapaxes(jacobian, -1, -2)) / 2
+    if np.any(np.linalg.eigvalsh(symmetric)[:, 0] <= 1e-6):
+        raise ValueError("Distortion mapping is locally folded or singular")
+    return normalized
+
+
 @dataclass
 class StereoGeometry:
     mode: str
@@ -95,13 +130,14 @@ class StereoGeometry:
             raise ValueError("Expected finite matching Nx2 pixel arrays")
         if not np.isfinite(max_reprojection_px) or max_reprojection_px <= 0:
             raise ValueError("Reprojection threshold must be positive and finite")
+        size = np.asarray(self.image_size_wh)
+        if any(np.any(points < 0) or np.any(points >= size) for points in (left, right)):
+            raise ValueError("Stereo pixels are outside calibrated image bounds")
         normalized = [
-            cv2.undistortPoints(p[:, None, :], K, D).reshape(-1, 2)
+            undistort_checked(p, K, D)
             for p, K, D in ((left, self.K_left, self.D_left), (right, self.K_right, self.D_right))
         ]
-        h = cv2.triangulatePoints(
-            np.eye(3, 4), np.column_stack((self.R, self.T)), normalized[0].T, normalized[1].T
-        )
+        h = cv2.triangulatePoints(np.eye(3, 4), np.column_stack((self.R, self.T)), normalized[0].T, normalized[1].T)
         if not np.isfinite(h).all() or np.any(np.abs(h[3]) < 1e-10):
             raise ValueError("Degenerate triangulation")
         xyz = (h[:3] / h[3]).T
@@ -113,7 +149,9 @@ class StereoGeometry:
             (right_xyz, right, self.K_right, self.D_right),
         ):
             projected = cv2.projectPoints(points, np.zeros(3), np.zeros(3), K, D)[0].reshape(-1, 2)
-            if np.any(np.linalg.norm(projected - observed, axis=1) > max_reprojection_px):
+            if not np.isfinite(projected).all() or np.any(
+                np.linalg.norm(projected - observed, axis=1) > max_reprojection_px
+            ):
                 raise ValueError("Stereo correspondence exceeds reprojection threshold")
         return xyz
 
@@ -129,9 +167,7 @@ def validate_status(status, geometry):
     mounts = []
     for side, K in (("left", geometry.K_left), ("right", geometry.K_right)):
         pose = meta[f"render_{side}_pose_head"]
-        mounts.append(
-            transform(pose["translation_m"], pose["rotation_quat_wxyz_opengl"]) @ CV_TO_GL
-        )
+        mounts.append(transform(pose["translation_m"], pose["rotation_quat_wxyz_opengl"]) @ CV_TO_GL)
         if abs(meta[side]["matrix"][0][0] - K[0, 0]) > 1e-6:
             raise ValueError("Live focal length differs from local calibration")
     relative = np.linalg.inv(mounts[1]) @ mounts[0]

@@ -14,13 +14,13 @@ from .vision import mask
 
 
 class StereoTracker:
-    def __init__(self, sim, cube_size=0.04):
+    def __init__(self, sim=None, cube_size=0.04, geometry=None):
         self.sim = sim
-        self.geometry = StereoGeometry.load("sim")
+        self.geometry = geometry or StereoGeometry.load("sim")
         self.cube_size = cube_size
         g = self.geometry
         self.R1, R2, self.P1, P2, self.Q, _, _ = cv2.stereoRectify(
-            g.K_left, g.D_left, g.K_right, g.D_right, g.image_size_wh, g.R, g.T, alpha=0
+            g.K_left, g.D_left, g.K_right, g.D_right, g.image_size_wh, g.R, g.T.reshape(3, 1), alpha=0
         )
         self.maps = [
             cv2.initUndistortRectifyMap(K, D, R, P, g.image_size_wh, cv2.CV_32FC1)
@@ -39,18 +39,24 @@ class StereoTracker:
         if (
             left is None
             or right is None
-            or left.shape != (480, 640, 3)
+            or left.shape != (*self.geometry.image_size_wh[::-1], 3)
             or right.shape != left.shape
         ):
-            raise ValueError("Synchronized 640x480 stereo pair required")
+            raise ValueError("Synchronized stereo pair at calibration resolution required")
         T = self.sim.kin.fk(self.sim.full_q(), "head_link") @ self.geometry.T_head_left_cv
         return self.locate_images(left, right, identified, T)
 
-    def locate_images(self, left, right, identified, T):
+    def locate_images(
+        self, left, right, identified, T, *, require_common_height=True, glyph_mask=None, coarse_objects=()
+    ):
+        """Measure glyph surfaces, optionally allowing 20 mm spread for coarse obstacles."""
+        coarse_objects = set(coarse_objects)
+        if "A" in coarse_objects or not coarse_objects.issubset(identified):
+            raise ValueError("invalid_coarse_obstacle_selection")
         g = self.geometry
-        rect = [
-            cv2.remap(im, *maps, cv2.INTER_LINEAR) for im, maps in zip((left, right), self.maps)
-        ]
+        if left.shape != (*g.image_size_wh[::-1], 3) or right.shape != left.shape:
+            raise ValueError("Image resolution differs from calibration")
+        rect = [cv2.remap(im, *maps, cv2.INTER_LINEAR) for im, maps in zip((left, right), self.maps)]
         gray = [cv2.cvtColor(im, cv2.COLOR_BGR2GRAY) for im in rect]
 
         def matcher(min_disp):
@@ -72,19 +78,23 @@ class StereoTracker:
         yy, xx = np.indices(disparity.shape)
         rx = xx - disparity
         sampled = cv2.remap(reverse, rx.astype(np.float32), yy.astype(np.float32), cv2.INTER_LINEAR)
-        consistent = (disparity > 1) & (rx >= 0) & (rx < 640) & (np.abs(disparity + sampled) < 0.75)
+        consistent = (disparity > 1) & (rx >= 0) & (rx < g.image_size_wh[0]) & (np.abs(disparity + sampled) < 0.75)
         with np.errstate(invalid="ignore", divide="ignore"):
             camera = cv2.reprojectImageTo3D(disparity, self.Q) @ self.R1
             world = camera @ T[:3, :3].T + T[:3, 3]
-        count, labels, stats, centers = cv2.connectedComponentsWithStats(mask(left))
+        binary = mask(left, mode=g.mode) if glyph_mask is None else np.asarray(glyph_mask)
+        if binary.shape != left.shape[:2] or binary.dtype != np.uint8:
+            raise ValueError("invalid_scoped_glyph_mask")
+        count, labels, stats, _centers = cv2.connectedComponentsWithStats(binary)
         letters = {}
         errors = {}
         used = set()
         for letter, pixel in identified.items():
             try:
                 choices = [i for i in range(1, count) if stats[i, 4] >= 15]
-                idx = min(choices, key=lambda i: np.linalg.norm(centers[i] - pixel))
-                if idx in used or np.linalg.norm(centers[idx] - pixel) > 10:
+                box_centers = stats[:, :2] + stats[:, 2:4] / 2
+                idx = min(choices, key=lambda i: np.linalg.norm(box_centers[i] - pixel))
+                if idx in used or np.linalg.norm(box_centers[idx] - pixel) > 10:
                     raise ValueError("No unique cyan component at VLM detection")
                 used.add(idx)
                 component = (labels == idx).astype(np.uint8) * 255
@@ -94,28 +104,28 @@ class StereoTracker:
                 if len(points) < 10:
                     raise ValueError("Fewer than 10 left/right-consistent glyph pixels")
                 z = float(np.median(points[:, 2]))
-                keep = np.abs(points[:, 2] - z) < 0.008
+                coarse = letter in coarse_objects
+                keep = np.abs(points[:, 2] - z) < (0.024 if coarse else 0.008)
                 matched_yx = np.column_stack(np.where(good))[keep]
                 points = points[keep]
                 if len(points) < 10 or keep.mean() < 0.7:
                     raise ValueError("Glyph depth is not a consistent horizontal surface")
                 z = float(np.median(points[:, 2]))
                 spread = float(np.quantile(np.abs(points[:, 2] - z), 0.9))
-                if spread > 0.006:
-                    raise ValueError("Glyph depth spread exceeds 6mm")
+                if spread > (0.02 if coarse else 0.008):
+                    raise ValueError(f"Glyph depth spread exceeds {20 if coarse else 8}mm")
                 # Use bounding-box center rather than the ink's asymmetric centroid.
                 x, y, w, h, _ = stats[idx]
                 u, v = x + w / 2, y + h / 2
-                ray = T[:3, :3] @ np.linalg.solve(g.K_left, [u, v, 1.0])
+                normalized = cv2.undistortPoints(np.array([[[u, v]]], dtype=float), g.K_left, g.D_left)[0, 0]
+                ray = T[:3, :3] @ np.r_[normalized, 1.0]
                 distance = (z - T[2, 3]) / ray[2]
                 if distance <= 0:
                     raise ValueError("Surface intersection behind camera")
                 top = T[:3, 3] + distance * ray
                 center = top - [0, 0, self.cube_size / 2]
                 grasp = top - [0, 0, 0.005]
-                sample = matched_yx[
-                    np.linspace(0, len(matched_yx) - 1, min(12, len(matched_yx))).astype(int)
-                ]
+                sample = matched_yx[np.linspace(0, len(matched_yx) - 1, min(12, len(matched_yx))).astype(int)]
                 correspondences = [
                     {
                         "left_rectified_px": [int(px), int(py)],
@@ -140,7 +150,7 @@ class StereoTracker:
         if letters:
             tops = np.array([v["top_center_xyz"][2] for v in letters.values()])
             table_z = float(np.median(tops) - self.cube_size)
-            if np.ptp(tops) > 0.015:
+            if require_common_height and np.ptp(tops) > 0.015:
                 return {
                     "ok": False,
                     "letters": {},

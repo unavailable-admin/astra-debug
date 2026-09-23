@@ -5,17 +5,17 @@ import json
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from .pinch import (
+    CLOSED,
+    INDEX_TIP,
+    NAMES,
+    OPEN,
+    REST_FINGER_ANGLE,
+    THUMB_TIP,
+    pinch_rotation,
+    source_waypoints,
+)
 from .timing import Timings, timed
-
-NAMES = [
-    "lh_index_mcp_pitch",
-    "lh_index_dip",
-    "lh_thumb_cmc_yaw",
-    "lh_thumb_cmc_pitch",
-    "lh_thumb_ip",
-]
-OPEN = np.array([0.5, 0.5 * 0.89, 1.0, 0.2, 0.2 * 2.29])
-CLOSED = np.array([0.72, 0.72 * 0.89, 1.0, 0.32, 0.32 * 2.29])
 
 
 def continuous_ik_step(kin, q, goal, goal_r, fraction):
@@ -28,10 +28,10 @@ def continuous_ik_step(kin, q, goal, goal_r, fraction):
         subpos = current[:3, 3] + fraction * (goal - current[:3, 3])
         subr = start_r * Rotation.from_rotvec(fraction * rv)
         try:
-            (target, error) = kin.solve(q, "left", subpos, subr.as_quat()[[3, 0, 1, 2]])
+            target, error = kin.solve(q, "left", subpos, subr.as_quat()[[3, 0, 1, 2]])
             actual = kin.fk(dict(q, **target), "left_wrist_yaw_link")
             angle = (subr.inv() * Rotation.from_matrix(actual[:3, :3])).magnitude()
-            delta = max((abs(v - q[n]) for (n, v) in target.items()))
+            delta = max(abs(v - q[n]) for (n, v) in target.items())
             if error <= 0.003 and angle <= 0.03 and (delta <= 0.35):
                 return (target, error, fraction)
             failure = f"IK continuity/residual: joint={delta}, pos={error}, angle={angle}"
@@ -47,12 +47,8 @@ class Grasp:
         self.timings = getattr(sim, "timings", None)
         if self.timings is None:
             self.timings = Timings()
-        self.rest = {
-            n: v for (n, v) in sim.full_q().items() if n in sim.names and n.startswith("left_")
-        }
-        self.rotation = Rotation.from_euler("z", 150, degrees=True) * Rotation.from_euler(
-            "y", 90, degrees=True
-        )
+        self.rest = {n: v for (n, v) in sim.full_q().items() if n in sim.names and n.startswith("left_")}
+        self.rotation = Rotation.from_euler("z", 150, degrees=True) * Rotation.from_euler("y", 90, degrees=True)
         self.quat = self.rotation.as_quat()[[3, 0, 1, 2]]
         self.held_hand = {}
         original_move = sim.move
@@ -67,27 +63,25 @@ class Grasp:
 
     def tips(self, q):
         w = np.linalg.inv(self.sim.kin.fk(q, "left_wrist_yaw_link"))
-        a = (w @ self.sim.kin.fk(q, "lh_index_distal") @ [0.006, 0, 0.03, 1])[:3]
-        b = (w @ self.sim.kin.fk(q, "lh_thumb_distal") @ [-0.005, 0, 0.04, 1])[:3]
+        a = (w @ self.sim.kin.fk(q, "lh_index_distal") @ INDEX_TIP)[:3]
+        b = (w @ self.sim.kin.fk(q, "lh_thumb_distal") @ THUMB_TIP)[:3]
         return (a, b)
 
     async def hand(self, targets):
         self.held_hand = {}
         for _ in range(20):
             q = self.sim.full_q()
-            if max((abs(v - q[n]) for (n, v) in targets.items())) < 0.04:
+            if max(abs(v - q[n]) for (n, v) in targets.items()) < 0.04:
                 self.held_hand = dict(targets)
                 return
-            await self.sim.move(
-                {n: float(q[n] + np.clip(v - q[n], -0.3, 0.3)) for (n, v) in targets.items()}
-            )
+            await self.sim.move({n: float(q[n] + np.clip(v - q[n], -0.3, 0.3)) for (n, v) in targets.items()})
         raise RuntimeError("Hand did not reach free-space preshape")
 
     async def center(self, xyz, nominal=None, *, settle=True):
         q = self.sim.full_q()
         if nominal is not None:
             q.update(dict(zip(NAMES, nominal)))
-        (a, b) = self.tips(q)
+        a, b = self.tips(q)
         await self.goto(np.array(xyz) - self.rotation.apply((a + b) / 2), settle=settle)
 
     async def release(self, xyz):
@@ -120,7 +114,7 @@ class Grasp:
         errors = []
         for xyz, yaw, hand in waypoints:
             q.update(dict(zip(NAMES, hand)))
-            (a, b) = self.tips(q)
+            a, b = self.tips(q)
             rot = Rotation.from_euler("z", yaw, degrees=True) * self.base_rotation
             pos = np.array(xyz) - rot.apply((a + b) / 2)
             start = self.sim.kin.fk(q, "left_wrist_yaw_link")
@@ -135,20 +129,16 @@ class Grasp:
             for fraction in np.linspace(1 / count, 1, count):
                 subpos = start[:3, 3] + fraction * (pos - start[:3, 3])
                 subrot = start_r * Rotation.from_rotvec(fraction * rv)
-                (joints, pe) = self.sim.kin.solve(q, "left", subpos, subrot.as_quat()[[3, 0, 1, 2]])
-                delta = max((abs(v - q[n]) for (n, v) in joints.items()))
+                joints, pe = self.sim.kin.solve(q, "left", subpos, subrot.as_quat()[[3, 0, 1, 2]])
+                delta = max(abs(v - q[n]) for (n, v) in joints.items())
                 if delta > 0.35:
-                    raise RuntimeError(
-                        f"Dense preflight IK branch change: {delta:.3f} rad at {list(xyz)}, yaw={yaw}"
-                    )
+                    raise RuntimeError(f"Dense preflight IK branch change: {delta:.3f} rad at {list(xyz)}, yaw={yaw}")
                 max_delta = max(max_delta, delta)
                 q.update(joints)
                 actual = self.sim.kin.fk(q, "left_wrist_yaw_link")
                 oe = (subrot.inv() * Rotation.from_matrix(actual[:3, :3])).magnitude()
                 if pe > 0.003 or oe > 0.03:
-                    raise RuntimeError(
-                        f"Dense preflight residual at {list(xyz)}, yaw={yaw}: {pe}, {oe}"
-                    )
+                    raise RuntimeError(f"Dense preflight residual at {list(xyz)}, yaw={yaw}: {pe}, {oe}")
             errors.append(
                 {
                     "center": list(xyz),
@@ -163,23 +153,21 @@ class Grasp:
 
     async def goto(self, pos, quat=None, *, settle=True):
         goal = np.asarray(pos, float)
-        goal_r = (
-            self.rotation if quat is None else Rotation.from_quat(np.asarray(quat)[[1, 2, 3, 0]])
-        )
+        goal_r = self.rotation if quat is None else Rotation.from_quat(np.asarray(quat)[[1, 2, 3, 0]])
         bias = np.zeros(7)
-        (previous_error, stalled) = (float("inf"), 0)
+        previous_error, stalled = (float("inf"), 0)
         for i in range(85):
             q = self.sim.full_q()
             current = self.sim.kin.fk(q, "left_wrist_yaw_link")
             r = Rotation.from_matrix(current[:3, :3])
             rotvec = (r.inv() * goal_r).as_rotvec()
-            (pe, oe) = (float(np.linalg.norm(goal - current[:3, 3])), float(np.linalg.norm(rotvec)))
+            pe, oe = (float(np.linalg.norm(goal - current[:3, 3])), float(np.linalg.norm(rotvec)))
             if pe < 0.003 and oe < 0.03:
                 print("GOTO_REACHED", np.round(goal, 4).tolist(), pe, oe, flush=True)
                 return
             step = 0.036
             fraction = min(1.0, step / max(pe, 1e-09), 0.16 / max(oe, 1e-09))
-            (target, err, fraction) = continuous_ik_step(self.sim.kin, q, goal, goal_r, fraction)
+            target, _err, fraction = continuous_ik_step(self.sim.kin, q, goal, goal_r, fraction)
             names = list(target)
             nominal = np.array([target[n] for n in names])
             measured = np.array([q[n] for n in names])
@@ -195,9 +183,7 @@ class Grasp:
             )
             afterq = self.sim.full_q()
             if fraction > 0.95:
-                bias = np.clip(
-                    bias + 0.4 * (nominal - np.array([afterq[n] for n in names])), -0.08, 0.08
-                )
+                bias = np.clip(bias + 0.4 * (nominal - np.array([afterq[n] for n in names])), -0.08, 0.08)
             combined = pe + 0.12 * oe
             stalled = stalled + 1 if combined >= previous_error - 0.0001 else 0
             previous_error = combined
@@ -211,7 +197,7 @@ class Grasp:
         print("PARK_FOR_VISION", flush=True)
         for _ in range(35):
             q = self.sim.full_q()
-            if max((abs(v - q[n]) for (n, v) in self.rest.items())) < 0.04:
+            if max(abs(v - q[n]) for (n, v) in self.rest.items()) < 0.04:
                 return
             await self.sim.move(
                 {n: float(q[n] + np.clip(v - q[n], -0.25, 0.25)) for (n, v) in self.rest.items()},
@@ -228,9 +214,7 @@ def plan_pick_place(c, xyz, target, transit_yaw):
     """
     failures = []
     candidates = [
-        (rise, destination_rise)
-        for destination_rise in [0.035, 0.03]
-        for rise in [0.065, 0.055, 0.045, 0.035]
+        (rise, destination_rise) for destination_rise in [0.035, 0.03] for rise in [0.065, 0.055, 0.045, 0.035]
     ]
     for rise, destination_rise in candidates:
         offset = np.zeros(3)
@@ -242,13 +226,9 @@ def plan_pick_place(c, xyz, target, transit_yaw):
         lifted = grasp_xyz.copy()
         lifted[2] = target.get("carry_height", clearance[2])
         lifted[2] = max(lifted[2], clearance[2] + 0.005)
-        placed = (
-            np.array([target["target_x"], target["target_y"], target.get("contact_z", xyz[2])])
-            + offset
-        )
+        placed = np.array([target["target_x"], target["target_y"], target.get("contact_z", xyz[2])]) + offset
         above = placed.copy()
         above[2] = placed[2] + destination_rise
-        contact_angles = list(range(transit_yaw + 10, 91, 10))
         transit_angles = list(range(80, transit_yaw - 1, -10))
         route = [above]
         if "front_corridor_y" in target:
@@ -262,11 +242,7 @@ def plan_pick_place(c, xyz, target, transit_yaw):
                 above,
             ]
         waypoints = [
-            (hover, transit_yaw, OPEN),
-            (clearance, transit_yaw, OPEN),
-            *[(clearance, y, OPEN) for y in contact_angles],
-            (grasp_xyz, 90, OPEN),
-            (grasp_xyz, 90, CLOSED),
+            *[(point, yaw, hand) for _, point, yaw, hand in source_waypoints(grasp_xyz, transit_yaw, rise)],
             (lifted, 90, CLOSED),
             *[(p, 90, CLOSED) for p in route],
             (placed, 90, CLOSED),
@@ -319,25 +295,18 @@ async def execute_pick_place(sim, c, letter, target, report, estimate):
         {
             f"lh_{finger}_{joint}": value
             for finger in ["middle", "ring", "pinky"]
-            for (joint, value) in [("mcp_pitch", 1.3), ("dip", 1.3 * 0.89)]
+            for (joint, value) in [("mcp_pitch", REST_FINGER_ANGLE), ("dip", REST_FINGER_ANGLE * 0.89)]
         }
     )
     await c.hand(targets)
-    (a, b) = c.tips(sim.full_q())
-    d = a - b
-    d /= np.linalg.norm(d)
-    z = np.array([0.0, 0.0, 1.0])
-    z -= d * z.dot(d)
-    z /= np.linalg.norm(z)
-    c.base_rotation = Rotation.from_matrix(
-        np.diag([1.0, -1.0, -1.0]) @ np.column_stack([d, z, np.cross(d, z)]).T
-    )
+    a, b = c.tips(sim.full_q())
+    c.base_rotation = Rotation.from_matrix(pinch_rotation(a, b))
     transit_yaw = 60 if letter in ("H", "A") else 30
     c.set_yaw(transit_yaw)
     print("OPEN_TIPS", a.tolist(), b.tolist(), letter, xyz.tolist(), flush=True)
     plan = plan_pick_place(c, xyz, target, transit_yaw)
     xyz = plan["grasp_xyz"]
-    (hover, clearance, lifted, placed, above, route) = [
+    hover, clearance, lifted, placed, above, route = [
         plan[k] for k in ("hover", "clearance", "lifted", "placed", "above", "route")
     ]
     place_clearance = above.copy()
@@ -362,14 +331,14 @@ async def execute_pick_place(sim, c, letter, target, report, estimate):
         c.held_hand.update(dict(zip(NAMES, nominal.tolist())))
         await sim.move(dict(zip(NAMES, nominal.tolist())))
         await c.center(xyz, nominal)
-        (a, b) = c.tips(sim.full_q())
+        a, b = c.tips(sim.full_q())
         print("CLOSE", float(fraction), "tip_gap", float(np.linalg.norm(a - b)), flush=True)
     report["before_lift_frame"] = sim.frame_count - 1
     phase("lift")
     await c.center(lifted, CLOSED)
     report["lift_frame"] = sim.frame_count - 1
     print("LIFT_CHECKPOINT", sim.frame_count - 1, flush=True)
-    (a, b) = c.tips(sim.full_q())
+    a, b = c.tips(sim.full_q())
     report["lift_decision"] = {
         "verification": "skipped",
         "source": "user_requested_trust_skill",

@@ -1,0 +1,167 @@
+{
+  "source": "pick-a-1789728753830981976/after-ready: original failed vision response, not a corrected or accepted scene.",
+  "decision": {
+    "target_letter": "A",
+    "target_id": 17,
+    "cube_ids": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "table_edge_mode": "adjacent_straight_edges",
+    "near_edge_normalized": [
+      [
+        81,
+        709
+      ],
+      [
+        150,
+        714
+      ],
+      [
+        202,
+        716
+      ],
+      [
+        363,
+        719
+      ],
+      [
+        475,
+        718
+      ],
+      [
+        587,
+        717
+      ],
+      [
+        732,
+        714
+      ]
+    ],
+    "left_edge_normalized": [
+      [
+        64,
+        652
+      ],
+      [
+        100,
+        570
+      ],
+      [
+        139,
+        482
+      ],
+      [
+        178,
+        395
+      ],
+      [
+        218,
+        308
+      ],
+      [
+        243,
+        254
+      ]
+    ],
+    "target_confidence": 0.99,
+    "selection_confidence": 0.93,
+    "table_edge_confidence": 0.88,
+    "unique_target": true,
+    "all_cube_glyphs_numbered": true,
+    "all_cubes_upright": false,
+    "selection_complete": false,
+    "table_edge_visible": true,
+    "tabletop_fully_visible": false,
+    "tabletop_clear_except_cubes": false,
+    "uncertainty_reasons": [
+      "Robot grippers and forearms obscure portions of the main tabletop; additional objects in those obscured portions cannot be assessed.",
+      "Cube 16 (M) is partly occluded by the right gripper. Its complete outline and independent resting condition cannot be verified, so all_cubes_upright is not established.",
+      "Visible non-cube equipment includes both robot gripper/forearm assemblies and associated cables overlapping the tabletop view. Their contact with the tabletop is uncertain.",
+      "The near tabletop edge is interrupted by robot forearms. Long straight visible portions remain available for line fitting, but the edge is not continuously visible."
+    ],
+    "evidence": "Sixteen identifiable letter cubes are visible: P, Q, B, X, Y, J, E, T, V, M, A, Z, W, F, U and K. The only visible A is candidate 17. Candidates 1–4, 10 and 11 are robot-related image components rather than cube glyphs. No additional unnumbered cube is clearly identifiable. Most cubes appear individually upright with their letter faces upward, but M is partially obscured. The tabletop has a rounded near-left transition and distinguishable straight near and left boundaries. Sampled points avoid the rounded arc and the lower thickness boundary."
+  },
+  "candidates": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    },
+    {
+      "id": 7
+    },
+    {
+      "id": 8
+    },
+    {
+      "id": 9
+    },
+    {
+      "id": 10
+    },
+    {
+      "id": 11
+    },
+    {
+      "id": 12
+    },
+    {
+      "id": 13
+    },
+    {
+      "id": 14
+    },
+    {
+      "id": 15
+    },
+    {
+      "id": 16
+    },
+    {
+      "id": 17
+    },
+    {
+      "id": 18
+    },
+    {
+      "id": 19
+    },
+    {
+      "id": 20
+    },
+    {
+      "id": 21
+    },
+    {
+      "id": 22
+    }
+  ]
+}

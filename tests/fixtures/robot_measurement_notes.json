@@ -1,0 +1,94 @@
+{
+  "target_letter": "A",
+  "target_id": 13,
+  "cube_ids": [
+    13,
+    7,
+    8,
+    16,
+    17,
+    20,
+    22
+  ],
+  "target_confidence": 0.98,
+  "target_verified": true,
+  "target_upright": true,
+  "table_edge_mode": "adjacent_straight_edges",
+  "table_edge_confidence": 0.88,
+  "table_edge_visible": true,
+  "near_edge_normalized": [
+    [
+      125,
+      646
+    ],
+    [
+      205,
+      661
+    ],
+    [
+      370,
+      698
+    ],
+    [
+      532,
+      724
+    ],
+    [
+      706,
+      750
+    ],
+    [
+      910,
+      778
+    ],
+    [
+      979,
+      783
+    ]
+  ],
+  "left_edge_normalized": [
+    [
+      109,
+      596
+    ],
+    [
+      150,
+      511
+    ],
+    [
+      201,
+      409
+    ],
+    [
+      250,
+      313
+    ],
+    [
+      292,
+      231
+    ]
+  ],
+  "tabletop_fully_visible": false,
+  "robot_self_candidate_ids": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "unresolved_cube_ids": [
+    11
+  ],
+  "target_uncertainty_reasons": [],
+  "table_uncertainty_reasons": [
+    "Edge coordinates are visual estimates; metric span, perpendicularity, residuals and extrapolation require local validation.",
+    "The nominal 40 mm cube dimensions and precise resting heights cannot be independently measured from this single image."
+  ],
+  "visibility_notes": [
+    "Candidate 13 has a clearly readable A on its visible top face and appears upright, unstacked and resting on the tabletop.",
+    "Other selected cube IDs are table-measurement samples only, not an obstacle inventory.",
+    "Robot arms, grippers and cables obscure portions of the tabletop and edges. Candidate 11 is partially obscured and was not selected.",
+    "No surrounding-obstacle, grasp-path or whole-table clearance assessment is made."
+  ],
+  "evidence": "Selected A is candidate 13 near the image center, with a readable top glyph usable for local stereo. Its visible top and side faces support an upright resting pose. Near-edge samples include the straight strip left of the left forearm, the exposed portion between the forearms, and the portion right of the right forearm, avoiding the cable crossing. Left-edge samples run from the nearest reliably straight portion above the near-left rounded transition toward the far end. The rounded transition itself was excluded; no sharp corner was invented. Occluded gaps were not sampled. All selected cube locations require local stereo and plane-fit validation."
+}

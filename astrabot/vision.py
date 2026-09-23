@@ -11,10 +11,16 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
-from .api import OfficialOpenAI
+from .api import OfficialOpenAI, response_text
 
 
-def mask(image):
+def mask(image, mode="sim"):
+    """Find cyan glyph ink using the selected camera domain's color range."""
+    if mode == "real":
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        return cv2.inRange(hsv, np.array([80, 55, 110]), np.array([115, 255, 255]))
+    if mode != "sim":
+        raise ValueError("Choose glyph mode explicitly: sim or real")
     b, g, r = cv2.split(image)
     return ((b > 130) & (g > 100) & (r < 100)).astype(np.uint8) * 255
 
@@ -25,20 +31,45 @@ def parse_json(content):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     value = json.loads(text)
     if not isinstance(value, dict):
-        raise ValueError("Expected a JSON object")
+        # Invalid response content uses the same exception type as JSON decoding.
+        raise ValueError("Expected a JSON object")  # noqa: TRY004
     return value
 
 
+def known_glyph_mask(image, pixels, radius=32):
+    """Recover dark ink only inside already identified glyph windows.
+
+    Global candidate discovery keeps its stricter brightness cutoff, which
+    excludes robot shells. Callers must verify identity and stereo depth for
+    these local windows; this mask does not identify new letters.
+    """
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # These known marker-ink windows require saturated blue at every brightness.
+    # The global discovery mask also accepts pale cyan; merging it here joins
+    # blue-cast white paper to the glyph and makes its bounding center jump.
+    ink = cv2.inRange(hsv, np.array([85, 160, 40]), np.array([115, 255, 255]))
+    result = np.zeros(image.shape[:2], np.uint8)
+    for pixel in pixels:
+        x, y = np.round(pixel).astype(int)
+        x0, x1 = max(0, x-radius), min(image.shape[1], x+radius+1)
+        y0, y1 = max(0, y-radius), min(image.shape[0], y+radius+1)
+        result[y0:y1, x0:x1] = ink[y0:y1, x0:x1]
+    return result
+
+
 class AstraVision:
-    def __init__(self, directory, timeout=120):
+    def __init__(self, directory, timeout=120, glyph_mode="sim"):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.timeout = timeout
+        if glyph_mode not in ("sim", "real"):
+            raise ValueError("Choose glyph mode explicitly: sim or real")
+        self.glyph_mode = glyph_mode
         self.client = OfficialOpenAI()
 
     def _call(self, stage, prompt, images):
         stem = self.directory / f"{time.time_ns()}_{stage}"
-        content = [{"type": "text", "text": prompt}]
+        content = [{"type": "input_text", "text": prompt}]
         for path in images:
             im = Image.open(path).convert("RGB")
             im.thumbnail((960, 540))
@@ -46,22 +77,16 @@ class AstraVision:
             im.save(data, format="JPEG", quality=80)
             content.append(
                 {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "data:image/jpeg;base64,"
-                        + base64.b64encode(data.getvalue()).decode()
-                    },
+                    "type": "input_image",
+                    "image_url": "data:image/jpeg;base64," + base64.b64encode(data.getvalue()).decode(),
                 }
             )
         body = {
             "model": self.client.model,
-            "reasoning_effort": "low",
-            "max_completion_tokens": 2048,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Inspect robot simulation images carefully. Return only the requested JSON object. Report uncertainty explicitly. A commanded robot motion does not prove an object moved. Never infer success from the task instruction.",
-                },
+            "reasoning": {"effort": "low"},
+            "max_output_tokens": 2048,
+            "instructions": "Inspect the supplied robot camera images carefully. Return only the requested JSON object. Report uncertainty explicitly. A commanded robot motion does not prove an object moved. Never infer success from the task instruction.",
+            "input": [
                 {"role": "user", "content": content},
             ],
         }
@@ -78,13 +103,9 @@ class AstraVision:
         )
         start = time.monotonic()
         try:
-            raw = self.client.chat(body, timeout=self.timeout)
-            stem.with_suffix(".response.json").write_text(
-                json.dumps(raw, ensure_ascii=False, indent=2)
-            )
-            if raw["choices"][0].get("finish_reason") != "stop":
-                raise ValueError("Incomplete model response")
-            result = parse_json(raw["choices"][0]["message"]["content"])
+            raw = self.client.responses(body, timeout=self.timeout)
+            stem.with_suffix(".response.json").write_text(json.dumps(raw, ensure_ascii=False, indent=2))
+            result = parse_json(response_text(raw))
             stem.with_suffix(".decision.json").write_text(
                 json.dumps(
                     {"elapsed_seconds": time.monotonic() - start, "decision": result},
@@ -109,8 +130,8 @@ class AstraVision:
     async def scene_candidates(self, image, word="ACE"):
         """Ask for measured component IDs instead of ambiguous normalized axes."""
         original = Image.open(image).convert("RGB")
-        binary = mask(cv2.imread(str(image)))
-        (count, _, stats, _) = cv2.connectedComponentsWithStats(binary)
+        binary = mask(cv2.imread(str(image)), mode=self.glyph_mode)
+        count, _, stats, _ = cv2.connectedComponentsWithStats(binary)
         components = [
             tuple(map(int, stats[i]))
             for i in range(1, count)
@@ -157,7 +178,6 @@ class AstraVision:
 
 
 def identified_pixels(decision, shape, word="ACE"):
-    h, w = shape[:2]
     result = {}
     for item in decision.get("letters", []):
         if not isinstance(item, dict):
@@ -168,11 +188,7 @@ def identified_pixels(decision, shape, word="ACE"):
         if decision.get("coordinate_mode") == "candidate_id":
             candidate = item.get("candidate_id")
             confidence = item.get("confidence")
-            if (
-                type(candidate) is not int
-                or type(confidence) not in (int, float)
-                or not 0.9 <= confidence <= 1
-            ):
+            if type(candidate) is not int or type(confidence) not in (int, float) or not 0.9 <= confidence <= 1:
                 continue
             measured = decision.get("candidate_map", {}).get(str(candidate))
             if measured:

@@ -23,6 +23,10 @@ __pycache__/
 build/
 dist/
 .DS_Store
-# Generated simulation output (never runtime inputs)
+# Local experiment results, hardware configuration and calibration (retain active inputs)
 /runs/
 /outputs/
+
+# Machine-specific scratch configuration
+/robot-config-new.json
+/robot-config.local.json

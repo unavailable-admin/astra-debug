@@ -12,7 +12,7 @@ fi
 
 cd -- "$PROJECT_DIR"
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
-export OPENAI_PROXY="${OPENAI_PROXY-http://127.0.0.1:18888}"
+export OPENAI_PROXY="${OPENAI_PROXY-}"
 
 if (( $# == 0 )); then
   set -- run --word ACE --speed 1.0 --max-skills 4

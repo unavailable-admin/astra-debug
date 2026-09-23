@@ -27,11 +27,7 @@ from .vision import AstraVision, identified_pixels
 
 def targets_for(word, start_x=-0.26):
     word = word.strip().upper()
-    if (
-        not word
-        or any(c not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" for c in word)
-        or len(set(word)) != len(word)
-    ):
+    if not word or any(c not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" for c in word) or len(set(word)) != len(word):
         raise ValueError("Expected unique ASCII letters")
     if len(word) > 4:
         raise ValueError("Up to four cubes fit the configured left-arm row")
@@ -61,11 +57,7 @@ def completion_checks(estimates, targets, hand_points, tolerance=0.018):
     if hands.ndim != 2 or hands.shape[1] != 3 or len(hands) == 0 or not np.isfinite(hands).all():
         return result
     for letter in targets:
-        if (
-            letter not in estimates
-            or not np.isfinite(errors.get(letter, np.nan))
-            or errors[letter] > tolerance
-        ):
+        if letter not in estimates or not np.isfinite(errors.get(letter, np.nan)) or errors[letter] > tolerance:
             return result
         xyz = np.asarray(estimates[letter]["estimated_xyz"], float)
         if xyz.shape != (3,) or not np.isfinite(xyz).all():
@@ -147,9 +139,7 @@ async def run(args):
                 )
                 if result["position_error_m"] > 0.01:
                     raise RuntimeError("Observation pose not reached")
-            controller.rest = {
-                n: v for n, v in sim.full_q().items() if n in sim.names and n.startswith("left_")
-            }
+            controller.rest = {n: v for n, v in sim.full_q().items() if n in sim.names and n.startswith("left_")}
             refresh_count = 0
             for turn in range(args.max_skills + 4):
                 frame = sim.save_observation()
@@ -162,11 +152,7 @@ async def run(args):
                 estimates = vision["letters"] if vision["ok"] else {}
                 action, letter, reason = select_action(decision, estimates, targets)
                 q = sim.full_q()
-                hands = [
-                    sim.kin.fk(q, name)[:3, 3]
-                    for name in sim.kin.by_child
-                    if name.startswith(("lh_", "rh_"))
-                ]
+                hands = [sim.kin.fk(q, name)[:3, 3] for name in sim.kin.by_child if name.startswith(("lh_", "rh_"))]
                 completion = completion_checks(estimates, targets, hands)
                 if completion["ok"]:
                     action, letter, reason = (
@@ -199,9 +185,7 @@ async def run(args):
                     if len(estimates) < len(targets) and refresh_count < 2:
                         refresh_count += 1
                         await sim.move({})
-                        report["events"].append(
-                            {"state": "refresh_observation", "attempt": refresh_count}
-                        )
+                        report["events"].append({"state": "refresh_observation", "attempt": refresh_count})
                         save()
                         continue
                     report["reason"] = reason
@@ -217,13 +201,11 @@ async def run(args):
                 skill = {"letter": letter, "start_frame": sim.frame_count - 1}
                 report["events"].append({"state": "pick_place", "skill": skill})
                 save()
-                await execute_pick_place(
-                    sim, controller, letter, targets[letter], skill, estimates[letter]
-                )
+                await execute_pick_place(sim, controller, letter, targets[letter], skill, estimates[letter])
                 report["skills_completed"] += 1
                 save()
             await sim.send({"type": "unsubscribe_step_result"})
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- persist the final task report on any failure
         report.update(reason="stopped_on_error", error=f"{type(exc).__name__}: {exc}")
         print("STOP", report["error"], flush=True)
     finally:
@@ -234,6 +216,9 @@ async def run(args):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="astrabot run", description=__doc__)
+    p.add_argument("--backend", choices=("sim", "real"), default="sim")
+    p.add_argument("--robot-config", type=Path)
+    p.add_argument("--robot-socket", type=Path)
     p.add_argument("--uri", default=DEFAULT_URI)
     p.add_argument("--word", default="ACE")
     p.add_argument(
@@ -251,14 +236,12 @@ def main(argv=None):
     args = p.parse_args(argv)
     if not np.isfinite(args.speed) or not 0.25 <= args.speed <= 3.0:
         p.error("Speed must be within [0.25, 3]")
-    if (
-        args.max_skills < 1
-        or args.api_max_attempts < 1
-        or not np.isfinite(args.api_timeout)
-        or args.api_timeout <= 0
-    ):
+    if args.max_skills < 1 or args.api_max_attempts < 1 or not np.isfinite(args.api_timeout) or args.api_timeout <= 0:
         p.error("Budgets and timeout must be positive")
-    result = asyncio.run(run(args))
-    raise SystemExit(
-        0 if result["success_verified"] or result.get("reason") == "inspection_complete" else 1
-    )
+    if args.backend == "real":
+        from .robot.controller import run as real_run
+
+        result = asyncio.run(real_run(args))
+    else:
+        result = asyncio.run(run(args))
+    raise SystemExit(0 if result["success_verified"] or result.get("reason") == "inspection_complete" else 1)
